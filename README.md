@@ -1,5 +1,7 @@
 # maskGWAS
-GWES by making target gene
+GWES by making target gene.
+
+This will generate the unitig file of a whole genome, which can be used for pyseer, with masking the target gene. This uses [unitig-caller](https://github.com/bacpop/unitig-caller) as a main tool. Main goal is detecting the hidden epistatic relationship of target gene.
 
 warning
 1. This is currently only runable under ARC server (#todo-list learn conda to make it runable generally) 
@@ -68,4 +70,6 @@ The code below are for helping you to run the pyseer. Use for reference only. Fo
 pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/extracted.unitig.out.pyseer.gz --similarity phylogeny_wholegenome.tsv --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu 24 > "$result_dir"/sccmec_kmers.txt
 ```
 
+# Reference
+Holley G., Melsted, P. Bifrost – Highly parallel construction and indexing of colored and compacted de Bruijn graphs. bioRxiv 695338 (2019). doi: https://doi.org/10.1101/695338
 
