@@ -3,7 +3,7 @@ GWES by making target gene
 
 warning
 1. This is currently only runable under ARC server (#todo-list learn conda to make it runable generally) 
-2. This assumes there are pyseer and unitig-caller downloaded properly under $DATA/myenv. The directory can be changed.
+2. This assumes there is unitig-caller downloaded properly under $DATA/myenv. The directory can be changed.
 
 # Usage
 
@@ -23,19 +23,19 @@ This also generate unitig_output file whch containsg the unitig informations. Yo
 
 # Output
 
-* ./sam
+* **./sam**
 
 folder of Sequce Alignment/Map (SAM) files 
 
-* ./bed/
+* **./bed/**
 
 folder of BED files. BED file is the simplified file of SAM file
 
-* ./ld_ref/
+* **./ld_ref/**
 
 folder containing ld information. It includes the bed and fasata files of LD (linkage disequilibrium) sequences
 
-* ./unitig_output/
+* **./unitig_output/**
 
 folder containing unitig outputs. It includes
 
@@ -56,7 +56,8 @@ unitig file of genome without LD region. converted into pyseer format.
 The code below are for helping you to run the pyseer. Use for reference only. For more detail read the below following [link](https://pyseer.readthedocs.io/en/master/tutorial.html).
 
 
-```
+```ruby
+pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/extracted.unitig.out.pyseer.gz --similarity phylogeny_wholegenome.tsv --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu 24 > "$result_dir"/sccmec_kmers.txt
 ```
 
 
