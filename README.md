@@ -7,6 +7,14 @@ warning
 
 # Usage
 
+First, you need to clone the whole respository into your local directory
+
+```ruby
+git clone https://github.com/jeju2486/maskGWAS.git
+```
+
+Then run the 'run_plink' file to calculate LD (linkage disequilibrium) length
+
 ```ruby
 bash run_plink.sh -i "/path/to/input_dir" -o "/path/to/output_dir"
 ```
