@@ -15,7 +15,7 @@ First, you need to clone the whole respository into your local directory
 git clone https://github.com/jeju2486/maskGWAS.git
 ```
 
-Then run the 'run_plink' file to calculate LD (linkage disequilibrium) length
+Then run the 'run_plink' file to calculate LD (linkage disequilibrium) length. This will detect fasta files in your directory.
 
 ```ruby
 bash run_plink.sh -i "/path/to/input_dir" -o "/path/to/output_dir"
@@ -63,13 +63,9 @@ unitig file of genome without LD region. converted into pyseer format.
 
 # For running PYSEER
 
-The code below are for helping you to run the pyseer. Use for reference only. For more detail read the below following [link](https://pyseer.readthedocs.io/en/master/tutorial.html).
+The code below are for helping you to run the pyseer. Use for reference only. For more detail read following [link](https://pyseer.readthedocs.io/en/master/tutorial.html).
 
 
 ```ruby
 pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/extracted.unitig.out.pyseer.gz --similarity phylogeny_wholegenome.tsv --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu 24 > "$result_dir"/sccmec_kmers.txt
 ```
-
-# Reference
-Holley G., Melsted, P. Bifrost – Highly parallel construction and indexing of colored and compacted de Bruijn graphs. bioRxiv 695338 (2019). doi: https://doi.org/10.1101/695338
-
