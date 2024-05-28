@@ -1,6 +1,6 @@
 library(ggplot2)
 library(dplyr)
-library(svglite)
+library(svglite,lib="~/local/rlibs")
 
 print("Starting data loading...")
 ld_data <- read.table("ld_output_sampled.ld", header = TRUE, sep = "\t", stringsAsFactors = FALSE)

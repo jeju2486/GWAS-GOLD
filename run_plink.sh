@@ -96,14 +96,16 @@ grep -v "^#" "$bam_output/variants.vcf" | shuf | head -n "$target_snps" >> "$bam
 
 # PLINK command to calculate LD (assuming VCF file is generated)
 ./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --vcf "$bam_output/variants_reduced.vcf" --make-bed --out temp
-./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --bfile temp --ld-window 200000 --threads 1 --r2 --ld-window-kb 2900 --ld-window-r2 0 --out ld_output
+./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --bfile temp --ld-window 200000 --threads 1 --r2 --ld-window-kb 2900 --ld-window-r2 0 --out "$bam_output"/ld_output
 
-awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}' ld_output.ld > ld_output_tab_delimited.ld
+awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}' "$bam_output"/ld_output.ld > "$bam_output"/ld_output_tab_delimited.ld
 
 rm temp*
-rm ld_output.ld
+rm "$bam_output"/ld_output.ld
 
-awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.01) { print $0 }' ld_output_tab_delimited.ld > ld_output_sampled.ld
+awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.01) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
+
+rm "$bam_output"/ld_output_sampled.ld
 
 echo "Processing complete."
 
@@ -114,4 +116,3 @@ module purge
 module load R/4.2.2-foss-2022a
 
 Rscript plotting_lddecay.r
-
