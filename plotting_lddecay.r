@@ -1,12 +1,33 @@
 library(ggplot2)
 library(dplyr)
-library(svglite,lib="~/local/rlibs")
+library(svglite)
+library(optparse)
+
+options(bitmapType='cairo')
+
+# Define command line options
+option_list <- list(
+  make_option(c("-i", "--input"), type = "character", default = NULL, 
+              help = "input file directory", metavar = "character"),
+  make_option(c("-o", "--output"), type = "character", default = NULL, 
+              help = "output file directory", metavar = "character")
+)
+
+# Parse command line arguments
+opt_parser <- OptionParser(option_list = option_list)
+opt <- parse_args(opt_parser)
+
+# Check if input and output directories are provided
+if (is.null(opt$input) || is.null(opt$output)) {
+  print_help(opt_parser)
+  stop("Both input and output directories must be supplied", call. = FALSE)
+}
+
+input_file <- opt$input
+output_dir <- opt$output
 
 print("Starting data loading...")
-ld_data <- read.table("ld_output_sampled.ld", header = TRUE, sep = "\t", stringsAsFactors = FALSE)
-#subset_ld_data <- read.table("scc_distance.tsv", header = TRUE, sep = ",")
-#subset_ld_data <- subset_ld_data[subset_ld_data$distance_interval < 20000, ]
-#gene_targets <- read.table("gene_target.tsv", header = TRUE, sep = "\t")
+ld_data <- read.table(input_file, header = TRUE, sep = "\t", stringsAsFactors = FALSE)
 
 maxBP <- max(ld_data$BP_B)
 print(paste("Maximum BP_B:", maxBP))
@@ -46,7 +67,7 @@ print("Data after aggregation:")
 subset_ld_data <- ld_data_summary[ld_data_summary$distance_interval < 40000, ]
 print(head(subset_ld_data))
 
-write.csv(subset_ld_data, "distance_zoom.tsv", row.names = FALSE)
+write.csv(subset_ld_data, file.path(output_dir, "distance_zoom.tsv"), row.names = FALSE)
 
 print("Starting plotting...")
 
@@ -88,12 +109,11 @@ p2 <- ggplot(subset_ld_data, aes(x = distance_interval, y = average_R2)) +
   ) +
   scale_y_continuous(breaks = seq(0, 1.0 , by = 0.1))
 
+# Save the plots
+ggsave(file.path(output_dir, "ld_decay_scc.png"), plot = p, width = 10, height = 6, device="png")
+ggsave(file.path(output_dir, "ld_decay_log_scc.png"), plot = p2, width = 10, height = 6, device="png")
+ggsave(file.path(output_dir, "ld_decay_scc.svg"), plot = p, width = 10, height = 6, device = "svg")
+ggsave(file.path(output_dir, "ld_decay_log_scc.svg"), plot = p2, width = 10, height = 6, device = "svg")
+write.csv(ld_data_summary, file.path(output_dir, "scc_distance.tsv"), row.names = FALSE)
 
-# Save the plot
-ggsave("ld_decay_scc.png", plot = p, width = 10, height = 6, device="png")
-ggsave("ld_decay_log_scc.png", plot = p2, width = 10, height = 6, device="png")
-ggsave("ld_decay_scc.svg", plot = p, width = 10, height = 6, device = "svg")
-ggsave("ld_decay_log_scc.svg", plot = p2, width = 10, height = 6, device = "svg")
-write.csv(ld_data_summary, "scc_distance.tsv", row.names = FALSE)
 print("Plot saved successfully.")
-

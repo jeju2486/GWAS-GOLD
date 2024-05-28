@@ -103,7 +103,7 @@ awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}' "$bam_output"/ld_output.ld >
 rm temp*
 rm "$bam_output"/ld_output.ld
 
-awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.01) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
+awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.1) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
 
 rm "$bam_output"/ld_output_sampled.ld
 
@@ -115,4 +115,4 @@ echo "Plotting start..."
 module purge
 module load R/4.2.2-foss-2022a
 
-Rscript plotting_lddecay.r
+Rscript plotting_lddecay.r -i "$bam_output"/ld_output_sampled.ld -o "$bam_output"
