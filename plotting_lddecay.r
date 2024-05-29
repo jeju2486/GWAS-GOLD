@@ -41,11 +41,6 @@ ld_data$distance <- apply(ld_data, 1, function(x) {
 })
 print("Distance calculation completed.")
 
-specific_point <- data.frame(
-  distance_interval = 1,
-  average_R2 = 1.0
-)
-
 print("Aggregating data...")
 # Define interval sizes for aggregation
 interval_size_very_short <- 5
@@ -81,7 +76,7 @@ trend_data <- subset_ld_data[1:(num_rows/5), ]
 
 p <- ggplot(subset_ld_data, aes(x = distance_interval, y = average_R2)) +
   geom_point(size = 2) +
-  geom_smooth(method = "gam", formula = y ~ s(x, bs = "cs"), color = "red") +  # Use method = "loess" for smooth curve
+  geom_smooth(method = "glm", method.args = list(family = "binomial"), color = "red") +  # Use method = "loess" for smooth curve
 #  geom_smooth(method = "lm", formula=y ~ poly(x, 2), color = "red") +  
   scale_x_continuous(breaks = custom_breaks, labels = custom_breaks) +
   xlab("Distance (bp)") +
@@ -95,7 +90,6 @@ p <- ggplot(subset_ld_data, aes(x = distance_interval, y = average_R2)) +
   scale_y_continuous(breaks = seq(0, 1.0 , by = 0.1))
   
 p2 <- ggplot(subset_ld_data, aes(x = distance_interval, y = average_R2)) +
-  geom_point(data = specific_point, aes(x = distance_interval, y = average_R2), size = 2) +
   geom_point(size = 2) +
   geom_smooth(data = trend_data, method = "lm", formula = y ~ x, color = "red") +  # Use method = "loess" for smooth curve  
   scale_x_continuous(trans='log10',breaks = custom_log_breaks, labels = custom_log_breaks) +
