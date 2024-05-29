@@ -106,6 +106,9 @@ rm "$bam_output"/ld_output.ld
 awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.1) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
 
 rm "$bam_output"/ld_output_sampled.ld
+for index_file in "$isolate_dir"/*.{amb,ann,bwt,fai,pac,sa}; do
+  mv $index_file "$bam_output"
+done
 
 echo "Processing complete."
 
@@ -115,4 +118,4 @@ echo "Plotting start..."
 module purge
 module load R/4.2.2-foss-2022a
 
-Rscript plotting_lddecay.r -i "$bam_output"/ld_output_sampled.ld -o "$bam_output"
+Rscript plotting_lddecay.r -i "$bam_output"/ld_output_tab_delimited.ld -o "$bam_output"
