@@ -4,8 +4,8 @@
 module purge
 module load minimap2/2.24-GCCcore-11.3.0
 module load BEDTools/2.30.0-GCC-11.2.0
-module load Anaconda3
-source activate $DATA/myenv
+module load Anaconda3/2023.09-0
+conda activate $DATA/python3_12_2
 
 # Parse command-line arguments
 while getopts q:i:d:o:t: flag

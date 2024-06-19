@@ -21,7 +21,7 @@ Then run the `run_plink` file to calculate LD (linkage disequilibrium) length. T
 bash run_plink.sh -i "/path/to/input_dir" -o "/path/to/output_dir"
 ```
 
-This will generate the image files of ld decaying. You need to choose the proper threshold.This assumes the first file in the directory as reference genome to run it. (#todo-list make it changable). This assumes you loaded the unitig-caller and conda environemt properly before running it (#todo-list: add the debugging message to check if they really loaded properly).
+This will generate the image files of ld decaying. You need to choose the proper threshold.This assumes the first file in the directory as reference genome to run it. (#todo-list make it changable). This assumes you loaded the unitig-caller and conda environemt properly. You need to change the directory to yours (#todo-list: add the debugging message to check if they really loaded properly).
 
 ```ruby
 bash run_maskfasta.sh -q "/path/to/query_sequence.fasta" -i "/path/to/input_dir" -d 3000 -o "/path/to/output_dir" -t 12
