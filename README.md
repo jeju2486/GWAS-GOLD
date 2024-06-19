@@ -33,19 +33,19 @@ This also generate unitig_output file whch containsg the unitig informations. Yo
 
 # Output
 
-* `**./sam**`
+* **`./sam`**
 
 folder of Sequce Alignment/Map (SAM) files 
 
-* `**./bed/**`
+* **`./bed/`**
 
 folder of BED files. BED file is the simplified file of SAM file
 
-* `**./ld_ref/**`
+* **`./ld_ref/`**
 
 folder containing ld information. It includes the bed and fasata files of LD (linkage disequilibrium) sequences
 
-* `**./unitig_output/**`
+* **`./unitig_output/`**
 
 folder containing unitig outputs. It includes
 
