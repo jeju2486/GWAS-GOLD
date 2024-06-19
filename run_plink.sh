@@ -91,21 +91,32 @@ target_snps=$((total_snps / 10))
 # Keep the VCF header
 grep "^#" "$bam_output/variants.vcf" > "$bam_output/variants_reduced.vcf"
 
-# Randomly select SNPs and add them to the reduced VCF file
+# Randomly select SNPs and add them to the reduced VCF file size
 grep -v "^#" "$bam_output/variants.vcf" | shuf | head -n "$target_snps" >> "$bam_output/variants_reduced.vcf"
 
 # PLINK command to calculate LD (assuming VCF file is generated)
-./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --vcf "$bam_output/variants_reduced.vcf" --make-bed --out temp
-./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --bfile temp --ld-window 200000 --threads 1 --r2 --ld-window-kb 2900 --ld-window-r2 0 --out "$bam_output"/ld_output
+if [ -e "$bam_output"/ld_output_tab_delimited.ld ]; then  
+    
+    echo "ld_output already exists. Skipping PLINK commands."
+    
+  else
 
-awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}' "$bam_output"/ld_output.ld > "$bam_output"/ld_output_tab_delimited.ld
+  ./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --vcf "$bam_output/variants_reduced.vcf" --make-bed --out temp
+  ./plink_linux_x86_64_20231211/plink --double-id --allow-extra-chr --bfile temp --ld-window 200000 --threads 1 --r2 --ld-window-kb 2900 --ld-window-r2 0 --out "$bam_output"/ld_output
+  
+  # Make file tab-delimited for better processing after
+  awk 'BEGIN {OFS="\t"} {print $1,$2,$3,$4,$5,$6,$7}' "$bam_output"/ld_output.ld > "$bam_output"/ld_output_tab_delimited.ld
+  
+  rm temp*
+  rm "$bam_output"/ld_output.ld
 
-rm temp*
-rm "$bam_output"/ld_output.ld
+fi
 
-awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.1) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
+# For reducing the time of plotting let sampling 10% of total sample
+echo "Sampling for LD graph starts..."
 
-rm "$bam_output"/ld_output_sampled.ld
+awk 'BEGIN {srand()} NR==1 || (!/^($|[:space:]*#)/ && rand() <= 0.05) { print $0 }' "$bam_output"/ld_output_tab_delimited.ld > "$bam_output"/ld_output_sampled.ld
+
 for index_file in "$isolate_dir"/*.{amb,ann,bwt,fai,pac,sa}; do
   mv $index_file "$bam_output"
 done
@@ -118,4 +129,4 @@ echo "Plotting start..."
 module purge
 module load R/4.2.2-foss-2022a
 
-Rscript plotting_lddecay.r -i "$bam_output"/ld_output_tab_delimited.ld -o "$bam_output"
+Rscript plotting_lddecay.r -i "$bam_output"/ld_output_sampled.ld -o "$bam_output"
