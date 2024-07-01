@@ -59,7 +59,7 @@ print("Aggregation completed.")
 # Save aggregated data
 print("Data after aggregation:")
 subset_ld_data <- ld_data_summary %>%
-  filter(distance_interval < 40000)
+  filter(distance_interval < 100000)
 print(head(subset_ld_data))
 
 write.csv(subset_ld_data, file.path(output_dir, "distance_zoom.tsv"), row.names = FALSE)
@@ -67,23 +67,33 @@ write.csv(subset_ld_data, file.path(output_dir, "distance_zoom.tsv"), row.names 
 # Calculate average R2 after distance of 100,000
 average_R2_after_100000 <- ld_data_summary %>%
   filter(distance_interval > 100000) %>%
-  summarise(average_R2 = mean(average_R2, na.rm = TRUE)) %>%
-  pull(average_R2)
+  summarise(average_R2_2 = mean(average_R2, na.rm = TRUE)) %>%
+  pull(average_R2_2)
 print(paste("Average R2 after 100000 distance:", average_R2_after_100000))
 
 # Remove rows with invalid values for the log model
 cleaned_subset_ld_data <- subset_ld_data %>%
   filter(!is.na(average_R2) & average_R2 > 0 & !is.na(distance_interval) & distance_interval > 0)
 
+# Plotting
+print("Starting plotting...")
+
+custom_breaks <- seq(0, 100000, by = 10000)
+custom_log_breaks <- c(0, 10^(seq(0, 5, by = 1)))
+
+# Cut first 20% for log trend line
+num_rows <- nrow(cleaned_subset_ld_data)
+trend_data <- cleaned_subset_ld_data[1:(num_rows / 10), ]
+
 # Calculate the slope and y-intercept of the log-LD decaying trend-line
-log_model <- lm(log10(average_R2) ~ log10(distance_interval), data = cleaned_subset_ld_data)
+log_model <- lm(average_R2 ~ log10(distance_interval), data = trend_data)
 slope <- coef(log_model)[2]
 intercept <- coef(log_model)[1]
 print(paste("Slope of the log-LD decaying trend-line:", slope))
 print(paste("Y-intercept of the log-LD decaying trend-line:", intercept))
 
 # Calculate recommended LD length
-recommended_LD_length <- 10^((log10(average_R2_after_100000) - intercept) / slope)
+recommended_LD_length <- 10^((average_R2_after_100000 - intercept) / slope)
 print(paste("Recommended LD length is:", recommended_LD_length))
 
 # Write statistics to file
@@ -100,16 +110,6 @@ ld_length_file <- file.path(output_dir, "recommended_ld_length.txt")
 writeLines(paste("Recommended LD length is:", recommended_LD_length), con = ld_length_file)
 
 print("Statistics and recommended LD length saved successfully.")
-
-# Plotting
-print("Starting plotting...")
-
-custom_breaks <- seq(0, 40000, by = 5000)
-custom_log_breaks <- c(0, 10^(seq(0, 5, by = 1)))
-
-# Cut first 20% for log trend line
-num_rows <- nrow(cleaned_subset_ld_data)
-trend_data <- cleaned_subset_ld_data[1:(num_rows / 5), ]
 
 p <- ggplot(cleaned_subset_ld_data, aes(x = distance_interval, y = average_R2)) +
   geom_point(size = 2) +
@@ -132,10 +132,10 @@ p2 <- ggplot(cleaned_subset_ld_data, aes(x = distance_interval, y = average_R2))
   scale_y_continuous(breaks = seq(0, 1.0, by = 0.1))
 
 # Save the plots
-ggsave(file.path(output_dir, "ld_decay_scc.png"), plot = p, width = 10, height = 6, device = "png")
-ggsave(file.path(output_dir, "ld_decay_log_scc.png"), plot = p2, width = 10, height = 6, device = "png")
-ggsave(file.path(output_dir, "ld_decay_scc.svg"), plot = p, width = 10, height = 6, device = "svg")
-ggsave(file.path(output_dir, "ld_decay_log_scc.svg"), plot = p2, width = 10, height = 6, device = "svg")
-write.csv(ld_data_summary, file.path(output_dir, "scc_distance.tsv"), row.names = FALSE)
+ggsave(file.path(output_dir, "ld_decay.png"), plot = p, width = 10, height = 6, device = "png")
+ggsave(file.path(output_dir, "ld_decay_log.png"), plot = p2, width = 10, height = 6, device = "png")
+ggsave(file.path(output_dir, "ld_decay.svg"), plot = p, width = 10, height = 6, device = "svg")
+ggsave(file.path(output_dir, "ld_decay_log.svg"), plot = p2, width = 10, height = 6, device = "svg")
+write.csv(ld_data_summary, file.path(output_dir, "distance.tsv"), row.names = FALSE)
 
 print("Plot saved successfully.")
