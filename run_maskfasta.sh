@@ -22,7 +22,7 @@ done
 # Create necessary directories
 mkdir -p "$output_dir/sam" "$output_dir/bed" "$output_dir/ld_ref" "$output_dir/temp"
 
-rm "$output_dir/ld_ref/*"
+rm "$output_dir/ld_ref"/*
 
 # Iterate through reference genomes
 for reference_genome in "$input_dir"/*.{fas,fasta,fna}; do
@@ -40,7 +40,7 @@ for reference_genome in "$input_dir"/*.{fas,fasta,fna}; do
         echo "Processing $reference_base"
 
         # Run Minimap2 and save the SAM file
-        minimap2 -a "$reference_genome" "$query_sequence" > "$output_dir/sam/${reference_base}.sam"
+        minimap2 -a "$reference_genome" "$query_sequence" -t "$thread_num" > "$output_dir/sam/${reference_base}.sam"
         
         # Convert SAM to BED
         bedtools bamtobed -i "$output_dir/sam/${reference_base}.sam" > "$output_dir/bed/${reference_base}.bed"
@@ -77,8 +77,7 @@ for reference_genome in "$input_dir"/*.{fas,fasta,fna}; do
         echo -e "${chr}\t${start}\t${end}\t${gene_name}\t${strand}" > "$output_dir/temp/${reference_base}_${run_num}.bed"
 
         # Create upstream_ld and downstream_ld BED files, adjusting for the query gene length
-        bedtools slop -i "$output_dir/temp/${reference_base}_${run_num}.bed" -g "$output_dir/bed/${reference_base}_genome_size.txt" -l "${ld_length}" -r $((-query_length)) -s >> "$output_dir/ld_ref/${reference_base}_upstream_ld.bed"
-        bedtools slop -i "$output_dir/temp/${reference_base}_${run_num}.bed" -g "$output_dir/bed/${reference_base}_genome_size.txt" -l $((-query_length)) -r "${ld_length}" -s >> "$output_dir/ld_ref/${reference_base}_downstream_ld.bed"
+        bedtools slop -i "$output_dir/temp/${reference_base}_${run_num}.bed" -g "$output_dir/bed/${reference_base}_genome_size.txt" -b "${ld_length}" >> "$output_dir/ld_ref/${reference_base}_elongated.bed"
         
         # Increment the run number
         run_num=$((run_num + 1))
@@ -86,20 +85,21 @@ for reference_genome in "$input_dir"/*.{fas,fasta,fna}; do
     done < "$output_dir/bed/${reference_base}.bed"
     
     # Get FASTA sequences for the query gene and ld regions
-    bedtools getfasta -fi "$reference_genome" -bed "$output_dir/bed/${reference_base}.bed" -fo "$output_dir/ld_ref/${reference_base}_query_gene.fas"
-    bedtools getfasta -fi "$reference_genome" -bed "$output_dir/ld_ref/${reference_base}_upstream_ld.bed" -fo "$output_dir/ld_ref/${reference_base}_upstream_ld.fas"
-    bedtools getfasta -fi "$reference_genome" -bed "$output_dir/ld_ref/${reference_base}_downstream_ld.bed" -fo "$output_dir/ld_ref/${reference_base}_downstream_ld.fas"
-        
+    bedtools getfasta -fi "$reference_genome" -bed "$output_dir/ld_ref/${reference_base}_elongated.bed" -fo "$output_dir/ld_ref/${reference_base}_query_gene.fas"       
 done
+
+echo "Removing temporary files"
 
 # Clean up temporary files
 rm -r "$output_dir/temp"
-rm "$output_dir"/*txt
+rm "$input_dir"/*.fai "$input_dir"/*.amb "$input_dir"/*.ann "$input_dir"/*.bwt "$input_dir"/*.pac "$input_dir"/*.sa
 
-echo "Masking Finished, Now run unitig-caller..."
+module purge
+module load Anaconda3/2024.02-1
+source activate $DATA/python3_12_2
 
 #get fasta file addresses from input directory
-ls -d -1 "$output_dir"/ld_ref/*.fas > "$output_dir"/target_input.txt
+ls -d -1 "$output_dir"/bed/*.fas > "$output_dir"/target_input.txt
 ls -d -1 "$input_dir"/*.{fas,fasta,fna} > "$output_dir"/genome_input.txt
 
 mkdir -p "$output_dir/unitig_output"
@@ -107,17 +107,50 @@ mkdir -p "$output_dir/unitig_output"
 echo "Running unitig-caller for genomes"
 
 #run unitig-caller
-unitig-caller --call --refs "$output_dir"/genome_input.txt --out "$output_dir/unitig_output"/unitig.out --kmer 31 --pyseer --threads "${thread_num}"
-
-#run python code
-python generate_kmer.py "$output_dir"/target_input.txt --threads "${thread_num}" --out "$output_dir/unitig_output"/potential.kmers
-
-#extract the common field between the refernece genome and sccmec k-mers and delete the row from reference unitig result regardless of the second field
-grep -vf "$output_dir/unitig_output"/potential.kmers_output.txt "$output_dir/unitig_output"/unitig.out.pyseer > "$output_dir/unitig_output"/extracted.unitig.out.pyseer
+unitig-caller --call --refs "$output_dir"/genome_input.txt --out "$output_dir/unitig_output"/unitig.out --kmer 31 --pyseer --threads "$thread_num"
 
 #gzip the file
 gzip "$output_dir/unitig_output"/extracted.unitig.out.pyseer
 
 echo "unitig-caller finished"
+
+module purge
+module load BWA/0.7.17-GCCcore-11.2.0
+module load BEDTools/2.30.0-GCC-11.2.0
+
+# Convert unitigs to fasta format
+awk -F'|' '{print ">" NR "\n" $1}' "$output_dir/unitig_output"/unitig.out.pyseer > "$output_dir/unitig_output"/unitig.out.fasta
+
+echo "Filtering out the unitigs"
+
+# Create an output directory
+bwa_output_dir="bwa_output"
+mkdir -p "$output_dir/unitig_output"/${bwa_output_dir}
+
+cat "$output_dir/bed"/*fas > "$output_dir/unitig_output"/combined_sequences.fasta
+
+bwa index "$output_dir/unitig_output"/combined_sequences.fasta
+bwa mem -k 13 -t 6 "$output_dir/unitig_output"/combined_sequences.fasta "$output_dir/unitig_output"/unitig.out.fasta > "$output_dir/unitig_output"/${bwa_output_dir}/output.sam
+
+bedtools bamtobed -i "$output_dir/unitig_output"/${bwa_output_dir}/output.sam > "$output_dir/unitig_output"/${bwa_output_dir}/output.bed
+
+awk -F'\t' '!/^@/ && $3 != "*" {print $1}' "$output_dir/unitig_output"/${bwa_output_dir}/output.sam | sort -n | uniq > "$output_dir/unitig_output"/ids_to_extract.txt
+awk 'NR==FNR {a[$1]; next} /^>/ {header=$1; sub(/^>/, "", header); keep = !(header in a)} keep' "$output_dir/unitig_output"/ids_to_extract.txt "$output_dir/unitig_output"/unitig.out.fasta > "$output_dir/unitig_output"/unitig.filtered.fasta
+
+# Extract sequences (not IDs) from unitig.filtered.fasta
+grep -v '^>' "$output_dir/unitig_output"/unitig.filtered.fasta > "$output_dir/unitig_output"/survived_sequences.txt
+sed -i '/^$/d' "$output_dir/unitig_output"/survived_sequences.txt
+
+# Grep the corresponding lines from unitig.out.pyseer
+grep -F -f "$output_dir/unitig_output"/survived_sequences.txt "$output_dir/unitig_output"/unitig.out.pyseer > "$output_dir/unitig_output"/survived_unitigs.pyseer
+
+if [ -e "$output_dir/unitig_output"/survived_unitigs.pyseer.gz ]; then
+    rm "$output_dir/unitig_output"/survived_unitigs.pyseer.gz
+fi
+
+gzip "$output_dir/unitig_output"/survived_unitigs.pyseer
+
+echo "Remove the temp files"
+rm unitig.out.fasta unitig.filtered.fasta survived_sequences.txt ids_to_extract.txt
 
 echo "Ready to run pyseer"
