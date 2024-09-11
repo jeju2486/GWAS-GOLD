@@ -62,10 +62,14 @@ k-mers of LD region
 unitig file of genome without LD region. converted into pyseer format.
 
 # For running PYSEER
-
-The code below are for helping you to run the pyseer. Use for reference only. For more detail read following [link](https://pyseer.readthedocs.io/en/master/tutorial.html).
-
+This code will tun pyseer and sorting of the result files. It will sort the extremely high outliers as seperate plots.
 
 ```ruby
-pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/extracted.unitig.out.pyseer.gz --similarity phylogeny_wholegenome.tsv --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu 24 > "$result_dir"/sccmec_kmers.txt
+bash run_pyseer -t "/path/to/tree_file.nwk" -p "/path/to/phenotype_file.txt" -i "/path/to/unitig_output_dir" -o "/path/to/output_dir" -P "sccmec" -T 24 -s "/path/to/pyseer_scripts_dir"
+```
+# For plotting PYSEER
+This code below is for REFERENCE ONLY. Only runnable in ARC. You also need to change the directory information
+
+```ruby
+bash run_pyseer_plotting.sh
 ```
