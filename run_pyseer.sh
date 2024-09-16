@@ -45,8 +45,13 @@ source activate $DATA/python3_8_18
 # Run phylogeny distance calculation
 python "$pyseer_scripts_dir"/phylogeny_distance.py --lmm "$treefile" > "$result_dir"/"${prefix}_phylogeny.tsv"
 
-# Run pyseer
-pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/survived_unitigs.pyseer.gz --similarity "$result_dir"/"${prefix}_phylogeny.tsv" --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu "$threads" > "$result_dir"/"${prefix}_kmers.txt"
+# Check if the Pyseer output file already exists
+if [ ! -f "$result_dir/${prefix}_kmers.txt" ]; then
+    # Run pyseer if the output file does not exist
+    pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/survived_unitigs.pyseer.gz --similarity "$result_dir"/"${prefix}_phylogeny.tsv" --print-samples --output-patterns "$result_dir"/kmer_patterns.txt --cpu "$threads" > "$result_dir"/"${prefix}_kmers.txt"
+else
+    echo "Pyseer output file ${prefix}_kmers.txt already exists. Skipping Pyseer analysis."
+fi
 
 # Run count_patterns.py and capture the output
 threshold_output=$(python "$pyseer_scripts_dir"/count_patterns.py "$result_dir"/kmer_patterns.txt)
@@ -64,4 +69,4 @@ python "$pyseer_scripts_dir"/filter.outlier.py -i "$result_dir/significant_kmers
 awk 'NR==FNR {a[$1]; next} FNR==1 || !($1 in a)' "$result_dir"/high_outliers_kmers.txt "$result_dir"/"${prefix}_kmers.txt" > "$result_dir"/"${prefix}_kmers.filtered.txt"
 
 # Output message to confirm completion
-echo "Filtered k-mers saved to "$result_dir"/${prefix}_kmers.filtered.txt"
+echo "Filtered k-mers saved to $result_dir/${prefix}_kmers.filtered.txt"
