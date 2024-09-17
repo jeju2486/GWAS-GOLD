@@ -63,7 +63,7 @@ threshold=$(echo "$threshold_output" | grep "Threshold" | awk '{print $2}')
 cat <(head -1 "$result_dir"/"${prefix}_kmers.txt") <(awk -v threshold="$threshold" '$4 < threshold {print $0}' "$result_dir"/"${prefix}_kmers.txt") > "$result_dir"/significant_kmers.txt
 
 # Filter outliers
-python "$pyseer_scripts_dir"/filter.outlier.py -i "$result_dir/significant_kmers.txt" -o "$result_dir"
+python filter.outlier.py -i "$result_dir/significant_kmers.txt" -o "$result_dir"
 
 # Remove outliers from the k-mers file
 awk 'NR==FNR {a[$1]; next} FNR==1 || !($1 in a)' "$result_dir"/high_outliers_kmers.txt "$result_dir"/"${prefix}_kmers.txt" > "$result_dir"/"${prefix}_kmers.filtered.txt"
