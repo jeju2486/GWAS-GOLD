@@ -83,6 +83,12 @@ bash run_pyseer.sh \
   -T "$SLURM_CPUS_PER_TASK" \ #optional
   -s "$pyseer_script"
 ```
+
+##Or...
+
+you can try the `run_code.sh` file which is all-built-in file with instrucation of which version of program you should you. 
+WARNING: do not forget to change the file neames to your file name
+
 # For plotting PYSEER
 This code below is for REFERENCE ONLY. Only runnable in ARC. You also need to change the directory information
 
