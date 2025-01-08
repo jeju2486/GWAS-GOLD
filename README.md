@@ -7,6 +7,15 @@ warning
 1. This is currently only runable under ARC server (#todo-list learn conda to make it runable generally) 
 2. This assumes there is unitig-caller downloaded properly under your environment. 
 
+# Requirements
+
+1. minimap2 (2.24 or higher)
+2. BEDtools (2.30.0 or higher)
+3. PLINK 1.9 (not PLINK 2) 
+4. unitig-caller (or higher)
+5. BWA (0.7.17 or higher)
+6. pyseer (1.3.11 or higher)
+
 # Usage
 
 First, you need to clone the whole respository into your local directory
