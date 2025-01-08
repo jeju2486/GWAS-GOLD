@@ -74,7 +74,14 @@ unitig file of genome without LD region. converted into pyseer format.
 This code will tun pyseer and sorting of the result files. It will sort the extremely high outliers as seperate plots.
 
 ```ruby
-bash run_pyseer -t "/path/to/tree_file.nwk" -p "/path/to/phenotype_file.txt" -i "/path/to/unitig_output_dir" -o "/path/to/output_dir" -P "sccmec" -T 24 -s "/path/to/pyseer_scripts_dir"
+bash run_pyseer.sh \
+  -t "$treefile" \
+  -p "$phenotype" \
+  -i "$maskfasta_output_dir/unitig_output" \
+  -o "$pyseer_output_dir" \
+  -P "prefix" \ #optional
+  -T "$SLURM_CPUS_PER_TASK" \ #optional
+  -s "$pyseer_script"
 ```
 # For plotting PYSEER
 This code below is for REFERENCE ONLY. Only runnable in ARC. You also need to change the directory information
