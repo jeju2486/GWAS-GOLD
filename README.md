@@ -1,6 +1,6 @@
 # maskGWAS
 
-**maskGWAS** is a tool designed for Genome-Wide Epistatic Studies (GWES) by masking target genes. It generates unitig files of whole genomes, compatible with [pyseer](https://github.com/weecology/pyseer), by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
+**maskGWAS** is a add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed for Genome-Wide Epistatic Studies (GWES) by masking target genes in GWAS. It generates unitig files of whole genomes by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
 
 ## Warning
 
