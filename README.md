@@ -87,14 +87,13 @@ bash run_maskfasta.sh \
 - **`./unitig_output/`**  
   Contains unitig outputs:
   - `unitig.output.pyseer`: Unitigs of whole genomes for analysis.
-  - `potential.kmer_output.txt`: k-mers of LD regions.
-  - `extracted.unitig.out.pyseer`: Unitig files without LD regions, converted for pyseer.
+  - `survived_unitigs.pyseer.gz`: Unitig files without LD regions, converted for pyseer.
 
 ### 4. Run pyseer
 
 Execute pyseer and sort the result files, separating extreme outliers for plotting:
 
-```bash
+```ruby
 bash run_pyseer.sh \
   -t "$treefile" \
   -p "$phenotype" \
@@ -110,7 +109,7 @@ bash run_pyseer.sh \
 You can use the all-in-one `run_code.sh` script, which includes instructions for required program versions.  
 **Warning**: Remember to update file names accordingly.
 
-```bash
+```ruby
 bash run_code.sh
 ```
 
@@ -118,7 +117,7 @@ bash run_code.sh
 
 **Note**: This step is currently only runnable on ARC servers. Ensure you update directory paths accordingly.
 
-```bash
+```ruby
 bash run_pyseer_plotting.sh \
   -r "$reference_dir" \
   -g "$gff_dir" \
@@ -149,7 +148,7 @@ bash run_pyseer_plotting.sh \
 
 `maskGWAS` automates running pyseer and sorting results, separating extreme outliers for individual plots.
 
-```bash
+```ruby
 bash run_pyseer.sh \
   -t "$treefile" \
   -p "$phenotype" \
@@ -162,16 +161,17 @@ bash run_pyseer.sh \
 
 ## Plotting PYSEER Results
 
-Generate plots for pyseer results. **Note**: Only runnable on ARC servers. Ensure directory paths are correctly set.
+Generate plots for pyseer results. Ensure directory paths are correctly set.
 
-```bash
+```ruby
 bash run_pyseer_plotting.sh \
-  -r "$reference_dir" \
+  -r "$input_fasta_dir" \
   -g "$gff_dir" \
   -s "$pyseer_script" \
   -o "$pyseer_output_dir" \
   -p "sccmec"  # Optional: Prefix for output files
 ```
+This code will automatically find the gff files in the given directory corresponding to the fasta file and assuming all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
 
 **Output:**
 - Two plots:
@@ -184,7 +184,6 @@ bash run_pyseer_plotting.sh \
 
 - **Generalization**: Learn Conda to make `maskGWAS` runnable outside ARC servers.
 - **Reference Genome Selection**: Allow users to select the reference genome file.
-- **Environment Checks**: Add debugging messages to verify proper loading of `unitig-caller` and Conda environments.
 - **Plotting Enhancements**: Make plotting scripts more adaptable and customizable.
 
 ## Additional Information
