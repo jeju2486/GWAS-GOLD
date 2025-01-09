@@ -1,4 +1,3 @@
-```markdown
 # maskGWAS
 
 **maskGWAS** is a tool designed for Genome-Wide Epistatic Studies (GWES) by masking target genes. It generates unitig files of whole genomes, compatible with [pyseer](https://github.com/weecology/pyseer), by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
