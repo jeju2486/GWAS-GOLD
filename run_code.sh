@@ -53,16 +53,17 @@ echo "Generating the phandango plots"
 
 reference_seq="/data/biol-micro-genomics/kell7366/maskGWAS/input_fas/20001_562_20504.fasta"
 
-python "$pyseer_script"/../phandango_mapper-runner.py "$pyseer_output_dir"/ecoli_kmers.filtered.txt "$reference_seq" "$pyseer_output_dir"/ecoli_kmers_minimum_F.plot
-python "$pyseer_script"/../phandango_mapper-runner.py "$pyseer_output_dir"/high_outliers_kmers.txt "$reference_seq" "$pyseer_output_dir"/ecoli_kmers_high_F.plot
+gff_dir="/data/biol-micro-genomics/kell7366/sccmec_ncbi_dataset/filtered_data/filtered_gffs"
 
-## This will iterate down the list of annotations, annotating the k-mers which haven? already been mapped to a previous annotation
-python "$pyseer_script"/../annotate_hits_pyseer-runner.py "$pyseer_output_dir"/filtered_kmers_normal_and_low.txt "$pyseer_output_dir"/reference.tsv "$pyseer_output_dir"/low_annotated_kmers.txt
-python "$pyseer_script"/../annotate_hits_pyseer-runner.py "$pyseer_output_dir"/high_outliers_kmers.txt "$pyseer_output_dir"/reference.tsv "$pyseer_output_dir"/high_annotated_kmers.txt
+#Run plotting
+bash run_pyseer_plotting.sh \
+  -r "$input_dir" \
+  -g "$gff_dir" \
+  -s "$pyseer_script" \
+  -o "$pyseer_output_dir" \
+  -p "ecoli"
 
-# summarise annotations to create a plot of significant genes, only use genes k-mers are actually in
-python "$pyseer_script"/summarise_annotations.py "$pyseer_output_dir"/low_annotated_kmers.txt > "$pyseer_output_dir"/low_gene_hits.txt
-python "$pyseer_script"/summarise_annotations.py "$pyseer_output_dir"/high_annotated_kmers.txt > "$pyseer_output_dir"/high_gene_hits.txt
+echo "All done!"
 
 module purge
 module load R/4.4.0-gfbf-2023a
