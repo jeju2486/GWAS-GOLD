@@ -1,38 +1,44 @@
+#!/usr/bin/bash
+
 ################################################################################
 # 1) PARSE COMMAND-LINE ARGUMENTS
 ################################################################################
 
 usage() {
-    echo "Usage: $0 -i <input_dir> -d <ld_length> -o <output_dir> -t <thread_num> [-q <query_sequence> | -s <summary_tsv>]"
+    echo "Usage: $0 -i <input_dir> -d <ld_length> -o <output_dir> -t <thread_num> [-s <summary_tsv>] -g <gene_fasta>"
     echo
     echo "Options:"
-    echo "  -q    Query sequence to map (FASTA file)"
     echo "  -s    Summary TSV file with pre-computed results"
     echo "  -i    Directory containing reference FASTA files"
     echo "  -d    Length for LD region"
     echo "  -o    Directory to store outputs"
     echo "  -t    Number of threads"
+    echo "  -g    Gene FASTA file (e.g., containing lukF-PV/lukS-PV), used to build ABRicate DB"
     echo "  -h    Show this help message"
     exit 1
 }
 
 # Initialize variables
 summary_tsv=""
-query_sequence=""
+input_dir=""
+ld_length=""
+output_dir=""
+thread_num=""
+gene_fasta=""
 
 # Parse arguments
-while getopts ":q:s:i:d:o:t:h" flag
+while getopts ":s:i:d:o:t:g:h" flag
 do
     case "${flag}" in
-        q) query_sequence=${OPTARG};;    # Query sequence to map
-        s) summary_tsv=${OPTARG};;       # TSV with pre-computed results
-        i) input_dir=${OPTARG};;         # Directory containing reference FASTA
-        d) ld_length=${OPTARG};;         # Length for LD region
-        o) output_dir=${OPTARG};;        # Where to store outputs
-        t) thread_num=${OPTARG};;        # Number of threads
-        h) usage;;                       # Show help message
+        s) summary_tsv=${OPTARG};;   # TSV with pre-computed results
+        i) input_dir=${OPTARG};;     # Directory containing reference FASTA
+        d) ld_length=${OPTARG};;     # Length for LD region
+        o) output_dir=${OPTARG};;    # Where to store outputs
+        t) thread_num=${OPTARG};;    # Number of threads
+        g) gene_fasta=${OPTARG};;    # Gene FASTA for ABRicate
+        h) usage;;                   # Show help message
         \?) echo "Invalid option: -$OPTARG" >&2; usage;;
-        :) echo "Option -$OPTARG requires an argument." >&2; usage;;
+        :)  echo "Option -$OPTARG requires an argument." >&2; usage;;
     esac
 done
 
@@ -42,21 +48,13 @@ if [[ -z "${input_dir}" || -z "${ld_length}" || -z "${output_dir}" || -z "${thre
     usage
 fi
 
-# Ensure that either -q or -s is provided, but not both
-if [[ -n "${query_sequence}" && -n "${summary_tsv}" ]]; then
-    echo "Error: Specify either -q (query sequence) or -s (summary TSV), not both."
-    usage
-elif [[ -z "${query_sequence}" && -z "${summary_tsv}" ]]; then
-    echo "Error: You must specify either -q (query sequence) or -s (summary TSV)."
+# If no summary TSV is given, we require a gene FASTA
+if [[ -z "${summary_tsv}" && -z "${gene_fasta}" ]]; then
+    echo "Error: You must provide either a summary TSV (-s) or a gene FASTA (-g) for ABRicate."
     usage
 fi
 
 # Check if provided files/directories exist
-if [[ -n "${query_sequence}" && ! -f "${query_sequence}" ]]; then
-    echo "Error: Query sequence file '${query_sequence}' does not exist."
-    exit 1
-fi
-
 if [[ -n "${summary_tsv}" && ! -f "${summary_tsv}" ]]; then
     echo "Error: Summary TSV file '${summary_tsv}' does not exist."
     exit 1
@@ -64,6 +62,11 @@ fi
 
 if [[ ! -d "${input_dir}" ]]; then
     echo "Error: Input directory '${input_dir}' does not exist."
+    exit 1
+fi
+
+if [[ -n "${gene_fasta}" && ! -f "${gene_fasta}" ]]; then
+    echo "Error: Gene FASTA file '${gene_fasta}' does not exist."
     exit 1
 fi
 
@@ -80,7 +83,7 @@ mkdir -p "${output_dir}/sam" \
 rm -f "${output_dir}/ld_ref/"*
 
 ################################################################################
-# 3) OPTIONAL: PARSE THE SUMMARY TSV INTO ARRAYS/DICTIONARIES (IF PROVIDED)
+# 3) OPTIONAL: PARSE THE SUMMARY TSV INTO ARRAYS (IF PROVIDED)
 ################################################################################
 declare -A ref2contig
 declare -A ref2start
@@ -88,13 +91,10 @@ declare -A ref2end
 
 if [[ -n "${summary_tsv}" ]]; then
     echo "Reading summary TSV: ${summary_tsv}"
-    # Expected TSV format: Reference Contig Start0 End
-    # Example:
-    # GCF_000144955.fas NC_017338.2 33707 57871
+    # Expected TSV format: ReferenceFasta  Contig  Start0  End
     {
-        read -r header  # skip header
+        read -r header # skip header
         while read -r reference contig start0 endpos; do
-            # Store only if reference is not empty and coordinates are valid
             if [[ -n "${reference}" && "${contig}" != "NA" && "${start0}" != "NA" && "${endpos}" != "NA" ]]; then
                 ref2contig["${reference}"]="${contig}"
                 ref2start["${reference}"]="${start0}"
@@ -105,12 +105,37 @@ if [[ -n "${summary_tsv}" ]]; then
 fi
 
 ################################################################################
-# 4) ALIGN QUERY SEQUENCE OR USE TSV DATA TO CREATE BED FILES
+# 4) BUILD ABRICATE DATABASE (IF NO SUMMARY TSV PROVIDED)
+################################################################################
+
+abricate_db_dir="${output_dir}/abricate_db"
+abricate_db_name="my_abricate_db"
+
+if [[ -z "${summary_tsv}" ]]; then
+    echo "Making ABRicate DB from '${gene_fasta}'..."
+
+    # 1. Create the subdirectory named exactly how you'll refer to it with --db
+    mkdir -p "${abricate_db_dir}/${abricate_db_name}"
+
+    # 2. Rename or copy your gene FASTA to 'sequences' inside that directory
+    cp "${gene_fasta}" "${abricate_db_dir}/${abricate_db_name}/sequences"
+
+    # 3. Build the BLAST database from 'sequences'
+    pushd "${abricate_db_dir}/${abricate_db_name}" >/dev/null
+    makeblastdb -in sequences \
+                -title "${abricate_db_name}" \
+                -dbtype nucl \
+                -hash_index
+    popd >/dev/null
+fi
+
+################################################################################
+# 5) SCAN EACH REFERENCE GENOME (USING SUMMARY TSV OR ABRicate)
 ################################################################################
 
 for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
 
-    # Skip if no matching file
+    # Skip if no file matches
     if [[ ! -e $reference_genome ]]; then
         continue
     fi
@@ -118,11 +143,13 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
     reference_name=$(basename "$reference_genome")
     reference_base="${reference_name%.*}"
 
-    # -----------------------------------------------------------------------------
-    # A) If summary TSV is provided and contains data for this reference
-    # -----------------------------------------------------------------------------
+    sam_file="${output_dir}/sam/${reference_base}.sam"
+    bed_file="${output_dir}/bed/${reference_base}.bed"
+
+    # -------------------------------------------------------------------------
+    # A) Use summary TSV if available and has data for this reference
+    # -------------------------------------------------------------------------
     if [[ -n "${summary_tsv}" && -n "${ref2contig["${reference_name}"]}" ]]; then
-        # Pre-computed data exists
         contig="${ref2contig["${reference_name}"]}"
         start0="${ref2start["${reference_name}"]}"
         endpos="${ref2end["${reference_name}"]}"
@@ -130,82 +157,103 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
         echo "Using TSV data for reference: ${reference_name}"
         echo "Contig = ${contig}, Start0 = ${start0}, End = ${endpos}"
 
-        # Create a pseudo-SAM file if downstream steps require it
-        sam_file="${output_dir}/sam/${reference_base}.sam"
-        if [ ! -e "${sam_file}" ]; then
+        # Create placeholder SAM
+        if [[ ! -e "${sam_file}" ]]; then
             echo -e "@HD\tVN:1.6\tSO:unsorted" > "${sam_file}"
             echo -e "@SQ\tSN:${contig}\tLN:999999999" >> "${sam_file}"
-            # Placeholder alignment entry
             echo -e "READ_1\t0\t${contig}\t${start0}\t60\t*\t*\t0\t0\t*\t*\tAS:i:0\tXS:i:0" \
                 >> "${sam_file}"
-        else
-            echo "SAM file '${sam_file}' already exists. Skipping SAM creation."
         fi
 
-        # Create BED file from TSV coordinates
-        bed_file="${output_dir}/bed/${reference_base}.bed"
-        if [ ! -s "${bed_file}" ]; then
-            # Assuming '+' strand; adjust if strand information is available
+        # Create BED file
+        if [[ ! -s "${bed_file}" ]]; then
             echo -e "${contig}\t${start0}\t${endpos}\t${reference_base}\t+" \
                 > "${bed_file}"
-        else
-            echo "BED file '${bed_file}' already exists. Skipping BED creation."
         fi
 
+    # -------------------------------------------------------------------------
+    # B) Otherwise, run ABRicate if we have no summary TSV
+    # -------------------------------------------------------------------------
     else
-        # -----------------------------------------------------------------------------
-        # B) Fallback: No pre-computed data or summary TSV not provided => run minimap2
-        # -----------------------------------------------------------------------------
-        sam_file="${output_dir}/sam/${reference_base}.sam"
-        bed_file="${output_dir}/bed/${reference_base}.bed"
+        if [[ -z "${summary_tsv}" ]]; then
+            abricate_out="${output_dir}/temp/${reference_base}_abricate.tsv"
 
-        if [ -e "${sam_file}" ]; then
-            echo "SAM file '${sam_file}' already exists. Skipping minimap2."
-        else
-            if [[ -n "${query_sequence}" ]]; then
-                echo "Processing reference (minimap2): ${reference_base}"
-                # Run Minimap2 and save the SAM, suppress standard error
-                minimap2 -a -t "${thread_num}" "${reference_genome}" "${query_sequence}" \
-                    2>/dev/null \
-                    > "${sam_file}"
-            else
-                echo "Error: No query sequence provided and no summary data available for '${reference_name}'."
-                echo "Skipping this reference."
-                continue
+            if [[ ! -f "${bed_file}" ]]; then
+                echo "Running ABRicate on '${reference_base}'..."
+
+                # Here we use --datadir and --db to point ABRicate to the custom DB
+                abricate --datadir "${abricate_db_dir}" \
+                         --db "${abricate_db_name}" \
+                         --mincov 80 --minid 80 \
+                         "${reference_genome}" \
+                         > "${abricate_out}"
             fi
-        fi
 
-        # Convert SAM to BED if BED doesn't already exist
-        if [ -e "${sam_file}" ] && [ ! -s "${bed_file}" ]; then
-            bedtools bamtobed -i "${sam_file}" \
-                > "${bed_file}"
+            # Parse ABRicate output into BED
+            if [[ ! -s "${bed_file}" ]]; then
+                > "${bed_file}"  # start fresh
+                while IFS=$'\t' read -r line; do
+                    # Skip header lines
+                    [[ "$line" =~ ^# ]] && continue
+
+                    # Example columns: FILE, SEQUENCE, START, END, GENE, ...
+                    # Adjust indexing if your ABRicate version differs
+                    arr=($line)
+                    contig="${arr[1]}"
+                    startpos="${arr[2]}"
+                    endpos="${arr[3]}"
+                    gene="${arr[4]}"
+                    strand="+"
+
+                    echo -e "${contig}\t${startpos}\t${endpos}\t${gene}\t${strand}" \
+                        >> "${bed_file}"
+                done < "${abricate_out}"
+            fi
+
+            # Create placeholder SAM if needed
+            if [[ ! -s "${sam_file}" ]]; then
+                echo -e "@HD\tVN:1.6\tSO:unsorted" > "${sam_file}"
+                if [[ -s "${bed_file}" ]]; then
+                    first_line=$(head -n 1 "${bed_file}")
+                    bed_contig=$(echo "$first_line" | cut -f1)
+                    bed_start=$(echo "$first_line" | cut -f2)
+
+                    echo -e "@SQ\tSN:${bed_contig}\tLN:999999999" >> "${sam_file}"
+                    while IFS=$'\t' read -r c s e g str; do
+                        echo -e "READ_${g}\t0\t${c}\t${s}\t60\t*\t*\t0\t0\t*\t*\tAS:i:0\tXS:i:0" \
+                            >> "${sam_file}"
+                    done < "${bed_file}"
+                else
+                    # No hits found
+                    echo -e "@SQ\tSN:dummy\tLN:1" >> "${sam_file}"
+                fi
+            fi
+
+        else
+            echo "Warning: No summary data for '${reference_name}' and no ABRicate DB provided."
+            echo "Skipping reference '${reference_name}'."
+            continue
         fi
     fi
 
-    # Create genome length information file (for slop steps) if not already done
+    # -------------------------------------------------------------------------
+    # (Optional) Create genome size file for bedtools slop, etc.
+    # -------------------------------------------------------------------------
     genome_size_file="${output_dir}/bed/${reference_base}_genome_size.txt"
-    if [ ! -s "${genome_size_file}" ]; then
-        awk '/^>/{                                \
-                if (seqname)                      \
-                    print seqname "\t" length(seq);\
-                seqname=$1;                       \
-                seq="";                           \
-                next                              \
-             }                                    \
-             {seq = seq $0}                      \
-             END {print seqname "\t" length(seq)}' "${reference_genome}" \
+    if [[ ! -s "${genome_size_file}" ]]; then
+        awk '/^>/{if(seqname)print seqname"\t"length(seq);seqname=$1;seq="";next}
+             {seq=seq$0}
+             END{print seqname"\t"length(seq)}' "${reference_genome}" \
           | sed 's/>//' \
           > "${genome_size_file}"
     fi
-
 done
 
 ################################################################################
-# 5) CREATE EXTENDED BED REGIONS FOR UPSTREAM/DOWNSTREAM LD, AND GET FASTA
+# 6) CREATE EXTENDED BED REGIONS FOR UPSTREAM/DOWNSTREAM LD, AND GET FASTA
 ################################################################################
-for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
 
-    # Skip if no matching file
+for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
     if [[ ! -e $reference_genome ]]; then
         continue
     fi
@@ -219,26 +267,20 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
     genome_size_file="${output_dir}/bed/${reference_base}_genome_size.txt"
 
     # Skip if BED file does not exist or is empty
-    if [ ! -s "${bed_file}" ]; then
+    if [[ ! -s "${bed_file}" ]]; then
         echo "No gene found (BED empty) for '${reference_base}', Skipping."
         continue
     fi
 
-    # Initialize run counter
     run_num=1
-
-    # Read each line in BED
     while IFS=$'\t' read -r chr start end gene_name strand; do
-        # Calculate gene length
         query_length=$((end - start))
         echo "  Creating LD for gene: ${gene_name}, #${run_num}, length: ${query_length}"
 
-        # Temporary BED for single gene
         temp_bed="${output_dir}/temp/${reference_base}_${run_num}.bed"
         echo -e "${chr}\t${start}\t${end}\t${gene_name}\t${strand}" \
             > "${temp_bed}"
 
-        # Extend regions by ld_length on each side
         bedtools slop \
             -i "${temp_bed}" \
             -g "${genome_size_file}" \
@@ -248,7 +290,6 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
         run_num=$((run_num + 1))
     done < "${bed_file}"
 
-    # Extract fasta for the elongated (LD) regions
     ld_fasta="${output_dir}/ld_ref/${reference_base}_query_gene.fas"
     bedtools getfasta \
         -fi "${reference_genome}" \
@@ -257,7 +298,7 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
 done
 
 ################################################################################
-# 6) CLEAN UP AND PREPARE LISTS FOR UNITIG-CALLER
+# 7) CLEAN UP AND PREPARE LISTS FOR UNITIG-CALLER
 ################################################################################
 echo "Removing temporary files..."
 rm -rf "${output_dir}/temp"
@@ -268,110 +309,81 @@ rm -f "${input_dir}"/*.fai \
       "${input_dir}"/*.pac \
       "${input_dir}"/*.sa
 
-# Find .fas files in ld_ref and write to target_input.txt
 find "${output_dir}/ld_ref/" -maxdepth 1 -type f -name "*.fas" -print \
     > "${output_dir}/target_input.txt"
 
-# Find FASTA files in input_dir and write to genome_input.txt
 find "${input_dir}" -maxdepth 1 -type f \( -name "*.fas" -o -name "*.fasta" -o -name "*.fna" \) -print \
     > "${output_dir}/genome_input.txt"
 
 ################################################################################
-# 7) RUN UNITIG-CALLER
+# 8) RUN UNITIG-CALLER
 ################################################################################
 unitig_output_pyseer="${output_dir}/unitig_output/unitig.out.pyseer"
-
-if [ -f "${unitig_output_pyseer}" ]; then
+if [[ -f "${unitig_output_pyseer}" ]]; then
     echo "unitig output '${unitig_output_pyseer}' already exists. Skipping unitig-caller."
 else
-    echo "Running unitig-caller for genomes..."
+    echo "Running unitig-caller..."
     unitig-caller --call \
         --refs "${output_dir}/genome_input.txt" \
         --out  "${output_dir}/unitig_output/unitig.out" \
         --kmer 31 \
         --pyseer \
         --threads "${thread_num}"
-
-    gzip "${output_dir}/unitig_output/extracted.unitig.out.pyseer"
     echo "unitig-caller finished"
 fi
 
 ################################################################################
-# 8) CONVERT UNITIGS TO FASTA
+# 9) CONVERT UNITIGS TO FASTA
 ################################################################################
 unitig_fasta="${output_dir}/unitig_output/unitig.out.fasta"
-
 awk -F'|' '{print ">" NR "\n" $1}' "${unitig_output_pyseer}" \
     > "${unitig_fasta}"
 
 ################################################################################
-# 9) FILTER UNITIGS AGAINST COMBINED REFERENCE SEQUENCES USING BWA
+# 10) FILTER UNITIGS AGAINST COMBINED REFERENCE SEQUENCES USING BWA
 ################################################################################
 bwa_output_dir="bwa_output"
 mkdir -p "${output_dir}/unitig_output/${bwa_output_dir}"
 
-# Combine relevant reference sequences
 combined_fasta="${output_dir}/unitig_output/combined_sequences.fasta"
 cat "${output_dir}/ld_ref/"*.fas \
     > "${combined_fasta}"
 
-# Index combined sequences
 bwa index "${combined_fasta}" 2>/dev/null
 
-# Align unitigs to combined sequences, suppress BWA printing
-bwa mem -k 13 -t "${thread_num}" \
+bwa mem -x ont2d  -t "${thread_num}" \
     "${combined_fasta}" \
     "${unitig_fasta}" \
     2>/dev/null \
     > "${output_dir}/unitig_output/${bwa_output_dir}/output.sam"
 
-# Convert SAM to BED
 bedtools bamtobed \
     -i "${output_dir}/unitig_output/${bwa_output_dir}/output.sam" \
     > "${output_dir}/unitig_output/${bwa_output_dir}/output.bed"
 
-# Gather IDs that actually aligned
 awk -F'\t' '!/^@/ && $3 != "*" {print $1}' \
     "${output_dir}/unitig_output/${bwa_output_dir}/output.sam" \
     | sort -n | uniq \
     > "${output_dir}/unitig_output/ids_to_extract.txt"
 
-# Filter out matched unitigs
 awk 'NR==FNR {a[$1]; next} /^>/ {header=$1; sub(/^>/, "", header); keep = !(header in a)} keep' \
     "${output_dir}/unitig_output/ids_to_extract.txt" \
     "${unitig_fasta}" \
     > "${output_dir}/unitig_output/unitig.filtered.fasta"
 
-# Extract only the sequences (not headers)
 grep -v '^>' "${output_dir}/unitig_output/unitig.filtered.fasta" \
     > "${output_dir}/unitig_output/survived_sequences.txt"
 
-# Remove empty lines
 sed -i '/^$/d' "${output_dir}/unitig_output/survived_sequences.txt"
 
-################################################################################
-# 10) GREP CORRESPONDING LINES FROM PYSEER UNITIG OUTPUT
-################################################################################
-survived_sequences="${output_dir}/unitig_output/survived_sequences.txt"
 survived_unitigs="${output_dir}/unitig_output/survived_unitigs.pyseer"
-
-grep -F -f "${survived_sequences}" "${unitig_output_pyseer}" \
+grep -F -f "${output_dir}/unitig_output/survived_sequences.txt" "${unitig_output_pyseer}" \
     > "${survived_unitigs}"
 
-# Gzip the final set
-survived_unitigs_gz="${survived_unitigs}.gz"
-if [ -e "${survived_unitigs_gz}" ]; then
-    rm "${survived_unitigs_gz}"
-fi
 gzip "${survived_unitigs}"
-
-################################################################################
-# 11) FINAL CLEANUP
-################################################################################
-echo "Removing temporary unitig files..."
 rm -f "${unitig_fasta}" \
       "${output_dir}/unitig_output/unitig.filtered.fasta" \
-      "${survived_sequences}" \
+      "${output_dir}/unitig_output/survived_sequences.txt" \
       "${output_dir}/unitig_output/ids_to_extract.txt"
 
 echo "All tasks completed successfully."

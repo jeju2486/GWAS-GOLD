@@ -4,8 +4,7 @@
 
 ## Warning
 
-1. **Current Compatibility**: `maskGWAS` is currently only runnable on ARC servers.  
-   *Todo*: Learn Conda to make it generally runnable.
+1. **Current Compatibility**: `maskGWAS` is currently only runnable on if the requirements are fully ready. Check the requirements first, if there is any error.
 2. **Dependency Requirement**: Ensure that `unitig-caller` is properly downloaded and configured in your environment.
 
 ## Requirements
@@ -18,12 +17,13 @@ Before using `maskGWAS`, ensure the following software is installed:
 4. **[unitig-caller](https://github.com/bacpop/unitig-caller)** (or higher)
 5. **[BWA](http://bio-bwa.sourceforge.net/)** (version 0.7.17 or higher)
 6. **[pyseer](https://github.com/weecology/pyseer)** (version 1.3.11 or higher)
+7. **[ABRICATE](https://github.com/tseemann/abricate)** (version 1.0.0 or higher)
 
 ## Installation
 
 Clone the repository to your local directory:
 
-```bash
+```ruby
 git clone https://github.com/jeju2486/maskGWAS.git
 cd maskGWAS
 ```
@@ -36,7 +36,7 @@ cd maskGWAS
 
 To calculate LD using fasta files in your directory, run:
 
-```bash
+```ruby
 bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -p $SLURM_CPUS_PER_TASK
 ```
 
@@ -44,18 +44,17 @@ bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -p $SLURM_CPUS_PER_T
 
 If you have a core alignment file from PIRATE or any other source, you can reduce variant calling time:
 
-```bash
+```ruby
 bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -p $SLURM_CPUS_PER_TASK
 ```
 
-### 2. Visualize LD Decay (Optional)
+### 2.Visualize LD Decay (Optional)
 
 Visualize LD decay using `ggplot2` in R:
 
-```bash
+```ruby
 Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_dir"
 ```
-
 **Notes:**
 - This generates LD decay images.
 - Ensure the first file in the directory is your reference genome.
@@ -63,17 +62,41 @@ Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_di
   - Make the reference genome selectable.
   - Add debugging messages to verify environment setup.
 
-### 3. Mask Target Gene
 
+### 3.Mask Target Gene
 Run the masking script to generate SAM/BED files and LD information:
 
-```bash
+```ruby
 bash run_maskfasta.sh \
   -q "/path/to/query_sequence.fasta" \
   -i "/path/to/input_dir" \
   -d 3000 \
   -o "/path/to/output_dir" \
-  -t 12
+  -t $SLURM_CPUS_PER_TASK
+```
+
+#### If there is specific region you want to mask (Optional) 
+
+If you have the specific region you want to mask, you can use the `-s` parameter and give the file sepecify the region. The file should be tab-delimited format and should specify the contig, starting and end point. Like:
+
+`target region.tsv`
+
+```
+Reference Contig Start0 End
+GCF_000144955.fas NC_017338.2 33707 57871
+GCF_000159535.fas NC_017342.1 459032 486212
+GCF_000189455.fas NA NA NA
+```
+
+Then the running code will be like:
+
+```ruby
+bash run_maskfasta.sh\
+  -s "path/to/target_region.tsv" \
+  -i "/path/to/input_dir" \
+  -d 3000 \
+  -o "/path/to/output_dir" \
+  -t $SLURM_CPUS_PER_TASK
 ```
 
 **Output Directories:**

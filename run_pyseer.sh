@@ -43,7 +43,7 @@ if [ ! -f "$result_dir/${prefix}_kmers.txt" ]; then
     python "$pyseer_scripts_dir"/phylogeny_distance.py --lmm "$treefile" > "$result_dir"/"${prefix}_phylogeny.tsv"
     
     # Run pyseer if the output file does not exist
-    pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/survived_unitigs.pyseer.gz --similarity "$result_dir"/"${prefix}_phylogeny.tsv" --min-af 0.02 --output-patterns "$result_dir"/kmer_patterns.txt --cpu "$threads" > "$result_dir"/"${prefix}_kmers.txt"
+    pyseer --lmm --phenotypes "$phenotype" --kmers "$unitig_result"/survived_unitigs.pyseer.gz --similarity "$result_dir"/"${prefix}_phylogeny.tsv" --min-af 0.03 --output-patterns "$result_dir"/kmer_patterns.txt --cpu "$threads" > "$result_dir"/"${prefix}_kmers.txt"
 else
     echo "Pyseer output file ${prefix}_kmers.txt already exists. Skipping Pyseer analysis."
 fi
