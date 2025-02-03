@@ -109,6 +109,8 @@ if [ ! -f "runme.sh" ]; then
   exit 1
 fi
 
+sed -i 's/--se/--ctgs/g' ./runme.sh 
+
 echo "Executing runme.sh..."
 bash runme.sh
 
@@ -134,9 +136,21 @@ echo
 ################################################################################
 
 # Example: no filtering
-cp core.vcf core.filtered.vcf
-echo "Using core.filtered.vcf as input to PLINK..."
-echo
+vcf_sub="$output_dir/core_snps_subsampled.vcf"
+if [ -f "$vcf_sub" ]; then
+  echo "WARNING: $vcf_sub already exists, skipping subsampling..."
+else
+  echo "Subsampling ~5% of variants from $vcf_full..."
+  # 1) Copy header lines (start with '#')
+  grep '^#' core.vcf > "$vcf_sub"
+
+  # 2) Randomly select 5% of non-header (variant) lines
+  grep -v '^#' core.vcf | awk 'BEGIN {srand()} rand() <= 0.05' >> "$vcf_sub"
+
+  echo "Subsampled VCF created: $vcf_sub"
+  echo "Using core.filtered.vcf as input to PLINK..."
+fi
+
 
 ################################################################################
 # 6. Convert to PLINK & Calculate LD
@@ -147,13 +161,15 @@ if ! command -v plink &>/dev/null; then
 fi
 
 echo "Converting core.filtered.vcf to PLINK format..."
-plink --vcf core.filtered.vcf --allow-extra-chr --double-id \
-      --make-bed --out plink_data
+plink --vcf "$vcf_sub" --allow-extra-chr --double-id \
+      --make-bed --out plink_data \ 
+      --threads $cpus
 
 echo "Calculating pairwise LD (R^2) in PLINK..."
 plink --bfile plink_data --allow-extra-chr \
       --ld-window 1000 --ld-window-kb 500 --ld-window-r2 0 \
-      --r2 --out ld_results
+      --r2 --out ld_results \
+      --threads $cpus
 
 if [ ! -f "ld_results.ld" ]; then
   echo "ERROR: ld_results.ld not produced. Check PLINK logs."
