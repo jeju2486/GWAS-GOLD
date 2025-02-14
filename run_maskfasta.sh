@@ -283,7 +283,7 @@ for reference_genome in "${input_dir}"/*.{fas,fasta,fna}; do
     reference_name=$(basename "$reference_genome")
     reference_base="${reference_name%.*}"
 
-    debug_msg "Processing extended LD for: ${reference_base}"
+    echo "Processing extended LD for: ${reference_base}"
 
     bed_file="${output_dir}/bed/${reference_base}.bed"
     genome_size_file="${output_dir}/bed/${reference_base}_genome_size.txt"
@@ -322,7 +322,7 @@ done
 ################################################################################
 # 7) CLEAN UP AND PREPARE LISTS FOR UNITIG-CALLER
 ################################################################################
-debug_msg "Removing temporary files..."
+echo "Removing temporary files..."
 rm -rf "${output_dir}/temp"
 rm -f "${input_dir}"/*.fai \
       "${input_dir}"/*.amb \
@@ -342,16 +342,16 @@ find "${input_dir}" -maxdepth 1 -type f \( -name "*.fas" -o -name "*.fasta" -o -
 ################################################################################
 unitig_output_pyseer="${output_dir}/unitig_output/unitig.out.pyseer"
 if [[ -f "${unitig_output_pyseer}" ]]; then
-    debug_msg "unitig output '${unitig_output_pyseer}' already exists. Skipping unitig-caller."
+    echo "unitig output '${unitig_output_pyseer}' already exists. Skipping unitig-caller."
 else
-    debug_msg "Running unitig-caller..."
+    echo "Running unitig-caller..."
     unitig-caller --call \
         --refs "${output_dir}/genome_input.txt" \
         --out  "${output_dir}/unitig_output/unitig.out" \
         --kmer 31 \
         --pyseer \
         --threads "${thread_num}"
-    debug_msg "unitig-caller finished"
+    echo "unitig-caller finished"
 fi
 
 ################################################################################
