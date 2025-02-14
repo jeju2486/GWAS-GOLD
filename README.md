@@ -82,10 +82,11 @@ If you have the specific region you want to mask, you can use the `-s` parameter
 `target region.tsv`
 
 ```
-Reference Contig Start0 End
-GCF_000144955.fas NC_017338.2 33707 57871
-GCF_000159535.fas NC_017342.1 459032 486212
-GCF_000189455.fas NA NA NA
+Reference	Gene_presence	Contig	Start0	End
+GCF_000144955.fas	Yes	NC_017338.2	33707	57871
+GCF_000159535.fas	Yes	NC_017342.1	459032	486212
+GCF_000189455.fas	No	NZ_CP025395.1	33931	34407
+GCF_000568455.fas	Yes	NZ_CP007176.1	34275	88793
 ```
 
 Then the running code will be like:
