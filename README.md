@@ -37,7 +37,7 @@ cd maskGWAS
 To calculate LD using fasta files in your directory, run:
 
 ```ruby
-bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -p $SLURM_CPUS_PER_TASK
+bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -t $SLURM_CPUS_PER_TASK
 ```
 
 #### b. Using Core Alignment Files (Optional)
@@ -45,7 +45,7 @@ bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -p $SLURM_CPUS_PER_T
 If you have a core alignment file from PIRATE or any other source, you can reduce variant calling time:
 
 ```ruby
-bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -p $SLURM_CPUS_PER_TASK
+bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -t $SLURM_CPUS_PER_TASK
 ```
 
 ### 2.Visualize LD Decay (Optional)
