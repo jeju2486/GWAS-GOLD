@@ -68,7 +68,7 @@ Run the masking script to generate SAM/BED files and LD information:
 
 ```ruby
 bash run_maskfasta.sh \
-  -q "/path/to/query_sequence.fasta" \
+  -g "/path/to/query_sequence.fasta" \
   -i "/path/to/input_dir" \
   -d 3000 \
   -o "/path/to/output_dir" \
