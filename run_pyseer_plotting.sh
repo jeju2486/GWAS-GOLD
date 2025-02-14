@@ -154,9 +154,9 @@ fi
 # We'll run phandango for each, producing plots that end with the chosen FASTA's name
 if [ -f "${result_dir}/${prefix}_kmers.filtered.txt" ]; then
     out_plot="${result_dir}/${prefix}_kmers_minimum_${chosen_fasta_noext}.plot"
-    echo "[Info] Running phandango_mapper-runner.py on '${prefix}_kmers.filtered.txt'..."
+    echo "[Info] Running phandango_mapper-runner.py on '${prefix}_kmers.txt'..."
     python "$phandango_mapper_runner" \
-        "${result_dir}/${prefix}_kmers.filtered.txt" \
+        "${result_dir}/${prefix}_kmers.txt" \
         "$chosen_fasta" \
         "$out_plot"
     echo "[Info] Generated: $out_plot"
@@ -172,9 +172,16 @@ if [ -f "${result_dir}/high_outliers_kmers.txt" ]; then
     echo "[Info] Generated: $out_plot"
 fi
 
-###############################################################################
+
+# Step 2.5: Generate the Q-Q plot
+
+qq_plot="${pyseer_script_dir}/qq_plot.py"
+
+python "$qq_plot" "$output_dir/saureus_kmers.filtered.txt"
+
+mv ./qq_plot.png "$output_dir"
+
 # Step 3: Use {prefix}_reference.tsv to run annotate_hits_pyseer-runner.py
-###############################################################################
 annotate_hits_runner="${pyseer_script_dir}/../annotate_hits_pyseer-runner.py"
 if [ ! -f "$annotate_hits_runner" ]; then
     echo "Error: annotate_hits_pyseer-runner.py not found at '$annotate_hits_runner'." >&2
@@ -182,6 +189,16 @@ if [ ! -f "$annotate_hits_runner" ]; then
 fi
 
 # We'll annotate with the same low/high k-mers you mentioned
+if [ -f "${result_dir}/significant_kmers.txt" ]; then
+    original_annotated_out="${result_dir}/original_kmers_${prefix}.txt"
+    echo "[Info] Annotating normal/low k-mers with $reference_tsv..."
+    python "$annotate_hits_runner" \
+        "${result_dir}/significant_kmers.txt" \
+        "$reference_tsv" \
+        "$original_annotated_out"
+    echo "[Info] Created $original_annotated_out"
+fi
+
 if [ -f "${result_dir}/filtered_kmers_normal_and_low.txt" ]; then
     low_annotated_out="${result_dir}/low_annotated_kmers_${prefix}.txt"
     echo "[Info] Annotating normal/low k-mers with $reference_tsv..."
@@ -210,6 +227,17 @@ if [ ! -f "$summarise_annotations" ]; then
     echo "Error: summarise_annotations.py not found at '$summarise_annotations'." >&2
     exit 1
 fi
+
+# Summarize original hits
+if [ -f "${result_dir}/low_annotated_kmers_${prefix}.txt" ]; then
+    out_original_genes="${result_dir}/original_gene_hits_${prefix}.txt"
+    echo "[Info] Summarizing original annotated k-mers into $out_original_genes..."
+    python "$summarise_annotations" --nearby \
+        "${result_dir}/original_kmers_${prefix}.txt" \
+        > "$out_original_genes"
+    echo "[Info] Created $out_original_genes"
+fi
+
 
 # Summarize low hits
 if [ -f "${result_dir}/low_annotated_kmers_${prefix}.txt" ]; then
