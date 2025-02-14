@@ -75,6 +75,21 @@ bash run_maskfasta.sh \
   -t $SLURM_CPUS_PER_TASK
 ```
 
+#### Optional Parameters ####
+
+1. **Enable debugging mode**
+
+```ruby
+bash run_maskfasta.sh \
+  -g "/path/to/query_sequence.fasta" \
+  -i "/path/to/input_dir" \
+  -d 3000 \
+  -o "/path/to/output_dir" \
+  -t $SLURM_CPUS_PER_TASK
+  -x
+```
+Warning: output file will get massy
+
 #### If there is specific region you want to mask (Optional) 
 
 If you have the specific region you want to mask, you can use the `-s` parameter and give the file sepecify the region. The file should be tab-delimited format and should specify the contig, starting and end point. Like:
