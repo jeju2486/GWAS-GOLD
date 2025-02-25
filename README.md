@@ -128,48 +128,6 @@ bash run_maskfasta.sh\
   - `unitig.output.pyseer`: Unitigs of whole genomes for analysis.
   - `survived_unitigs.pyseer.gz`: Unitig files without LD regions, converted for pyseer.
 
-### 4. Run pyseer
-
-Execute pyseer and sort the result files, separating extreme outliers for plotting:
-
-```ruby
-bash run_pyseer.sh \
-  -t "$treefile" \
-  -p "$phenotype" \
-  -i "$maskfasta_output_dir/unitig_output" \
-  -o "$pyseer_output_dir" \
-  -P "prefix" \          # Optional
-  -T "$SLURM_CPUS_PER_TASK" \  # Optional
-  -s "$pyseer_script"
-```
-
-#### Alternative: Use `run_code.sh`
-
-You can use the all-in-one `run_code.sh` script, which includes instructions for required program versions.  
-**Warning**: Remember to update file names accordingly.
-
-```ruby
-bash run_code.sh
-```
-
-### 5. Plot pyseer Results
-
-**Note**: This step is currently only runnable on ARC servers. Ensure you update directory paths accordingly.
-
-```ruby
-bash run_pyseer_plotting.sh \
-  -r "$reference_dir" \
-  -g "$gff_dir" \
-  -s "$pyseer_script" \
-  -o "$pyseer_output_dir" \
-  -p "sccmec"  # Optional: Prefix for output files
-```
-
-**Notes:**
-- The prefix should ideally match the one used in `run_pyseer.sh`.
-- Generates two plots: one for extreme outliers and one for normal data.
-- *Todo*: Make the plotting process more adaptable.
-
 ## Output
 
 - **`./sam/`**  
@@ -212,16 +170,23 @@ bash run_pyseer_plotting.sh \
 ```
 This code will automatically find the gff files in the given directory corresponding to the fasta file and assuming all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
 
+**Notes:**
+- The prefix should ideally match the one used in `run_pyseer.sh`.
+- Generates two plots: one for extreme outliers and one for normal data.
+- *Todo*: Make the plotting process more adaptable.
+
+
 **Output:**
-- Two plots:
+- Three plots:
   1. Extreme outliers.
   2. Normal distribution.
+  3. Include all data
 
-*Todo*: Enhance plot customization and adaptability.
+*Todo*: Enhance plot customisation and adaptability.
 
 ## To-Do List
 
-- **Generalization**: Learn Conda to make `maskGWAS` runnable outside ARC servers.
+- **Generalisation**: Learn Conda to make `maskGWAS` runnable outside ARC servers.
 - **Reference Genome Selection**: Allow users to select the reference genome file.
 - **Plotting Enhancements**: Make plotting scripts more adaptable and customizable.
 
