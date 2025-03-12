@@ -71,14 +71,12 @@ Run the masking script to generate SAM/BED files and LD information:
 bash run_maskfasta.sh \
   -g "/path/to/query_sequence.fasta" \
   -i "/path/to/input_dir" \
-  -d "LD_threshold_value \
+  -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
   -t "number_of_cpus"
 ```
 
-#### Optional Parameters ####
-
-1. **Enable debugging mode**
+#### Optional Parameter to enable debugging mode (Warning: output files will get messy) ####
 
 ```ruby
 bash run_maskfasta.sh \
@@ -89,7 +87,6 @@ bash run_maskfasta.sh \
   -t "number_of_cpus"
   -x
 ```
-Warning: output file will get massy
 
 #### If there is specific region you want to mask (Optional) 
 
