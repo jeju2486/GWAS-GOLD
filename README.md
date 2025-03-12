@@ -26,6 +26,7 @@ cd maskGWAS
 
 To run this analysis pipeline you will need:
 - assembly files in FASTA format OR an alignment file
+- annotation files in GFF format
 - target sequence(s) to mask in FASTA format
 
 ## Usage
@@ -70,7 +71,7 @@ Run the masking script to generate SAM/BED files and LD information:
 bash run_maskfasta.sh \
   -g "/path/to/query_sequence.fasta" \
   -i "/path/to/input_dir" \
-  -d 3000 \
+  -d "LD_threshold_value \
   -o "/path/to/output_dir" \
   -t "number_of_cpus"
 ```
@@ -83,7 +84,7 @@ bash run_maskfasta.sh \
 bash run_maskfasta.sh \
   -g "/path/to/query_sequence.fasta" \
   -i "/path/to/input_dir" \
-  -d 3000 \
+  -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
   -t "number_of_cpus"
   -x
@@ -177,10 +178,7 @@ This code will automatically find the gff files in the given directory correspon
 - **Reference Genome Selection**: Allow users to select the reference genome file.
 - **Plotting Enhancements**: Make plotting scripts more adaptable and customizable.
 
-## Additional Information
 
-- **Repository**: [maskGWAS on GitHub](https://github.com/jeju2486/maskGWAS)
-- **Main Tool**: Utilizes [unitig-caller](https://github.com/bacpop/unitig-caller) as the primary tool for generating unitig files.
 
 ## Contact
 
