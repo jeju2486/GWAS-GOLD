@@ -1,15 +1,10 @@
 # maskGWAS
 
-**maskGWAS** is a add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed for Genome-Wide Epistatic Studies (GWES) by masking target genes in GWAS. It generates unitig files of whole genomes by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
-
-## Warning
-
-1. **Current Compatibility**: `maskGWAS` is currently only runnable on if the requirements are fully ready. Check the requirements first, if there is any error.
-2. **Dependency Requirement**: Ensure that `unitig-caller` is properly downloaded and configured in your environment.
+**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation by masking target genes before performing GWAS to allow informative identification of significant genotype-genotype variation. It generates unitig files of whole genomes by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
 
 ## Requirements
 
-Before using `maskGWAS`, ensure the following software is installed:
+Before using `maskGWAS`, ensure the following software are installed:
 
 1. **[minimap2](https://github.com/lh3/minimap2)** (version 2.24 or higher)
 2. **[BEDtools](https://bedtools.readthedocs.io/en/latest/)** (version 2.30.0 or higher)
@@ -27,6 +22,11 @@ Clone the repository to your local directory:
 git clone https://github.com/jeju2486/maskGWAS.git
 cd maskGWAS
 ```
+## Input
+
+To run this analysis pipeline you will need:
+- assembly files in FASTA format OR an alignment file
+- target sequence(s) to mask in FASTA format
 
 ## Usage
 
@@ -37,18 +37,18 @@ cd maskGWAS
 To calculate LD using fasta files in your directory, run:
 
 ```ruby
-bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -t $SLURM_CPUS_PER_TASK
+bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -t "number_of_cpus"
 ```
 
 #### b. Using Core Alignment Files (Optional)
 
-If you have a core alignment file from PIRATE or any other source, you can reduce variant calling time:
+If you have a core alignment file from [PIRATE](https://github.com/SionBayliss/PIRATE) or any other source, you can reduce variant calling time:
 
 ```ruby
-bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -t $SLURM_CPUS_PER_TASK
+bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -t "number_of_cpus"
 ```
 
-### 2.Visualize LD Decay (Optional)
+### 2. Visualize LD Decay (Optional)
 
 Visualize LD decay using `ggplot2` in R:
 
@@ -63,7 +63,7 @@ Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_di
   - Add debugging messages to verify environment setup.
 
 
-### 3.Mask Target Gene
+### 3. Mask Target Gene
 Run the masking script to generate SAM/BED files and LD information:
 
 ```ruby
@@ -72,7 +72,7 @@ bash run_maskfasta.sh \
   -i "/path/to/input_dir" \
   -d 3000 \
   -o "/path/to/output_dir" \
-  -t $SLURM_CPUS_PER_TASK
+  -t "number_of_cpus"
 ```
 
 #### Optional Parameters ####
@@ -85,7 +85,7 @@ bash run_maskfasta.sh \
   -i "/path/to/input_dir" \
   -d 3000 \
   -o "/path/to/output_dir" \
-  -t $SLURM_CPUS_PER_TASK
+  -t "number_of_cpus"
   -x
 ```
 Warning: output file will get massy
