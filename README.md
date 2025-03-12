@@ -1,6 +1,6 @@
 # maskGWAS
 
-**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation by masking target genes before performing GWAS to allow informative identification of significant genotype-genotype variation. It generates unitig files of whole genomes by masking the specified target gene. The primary goal is to detect hidden epistatic relationships involving the target gene.
+**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes before performing GWAS to identify significant variation associated with target gene carriage. It generates unitig files of whole genomes by masking the specified target gene. 
 
 ## Requirements
 
@@ -115,27 +115,14 @@ bash run_maskfasta.sh\
   -t $SLURM_CPUS_PER_TASK
 ```
 
-**Output Directories:**
+## Output
 
 - **`./sam/`**  
-  Contains Sequence Alignment/Map (SAM) files.
+  Contains sequence Alignment/Map (SAM) files.
 - **`./bed/`**  
   Contains BED files (simplified SAM files).
 - **`./ld_ref/`**  
   Contains LD information files, including BED and FASTA files for LD regions.
-- **`./unitig_output/`**  
-  Contains unitig outputs:
-  - `unitig.output.pyseer`: Unitigs of whole genomes for analysis.
-  - `survived_unitigs.pyseer.gz`: Unitig files without LD regions, converted for pyseer.
-
-## Output
-
-- **`./sam/`**  
-  Sequence Alignment/Map (SAM) files.
-- **`./bed/`**  
-  BED files (simplified SAM files).
-- **`./ld_ref/`**  
-  LD information files, including BED and FASTA files for LD regions.
 - **`./unitig_output/`**  
   1. `unitig.output.pyseer`: Unitigs of whole genomes used for analysis.
   2. `potential.kmer_output.txt`: k-mers from LD regions.
@@ -152,7 +139,7 @@ bash run_pyseer.sh \
   -i "$maskfasta_output_dir/unitig_output" \
   -o "$pyseer_output_dir" \
   -P "prefix" \          # Optional
-  -T "$SLURM_CPUS_PER_TASK" \  # Optional
+  -T "number_of_cpus" \  # Optional
   -s "$pyseer_script"
 ```
 
