@@ -25,8 +25,8 @@ cd maskGWAS
 
 To run this analysis pipeline you will need:
 - assembly files in FASTA format OR an alignment file
-- annotation files in GFF format
 - target sequence(s) to mask in FASTA format
+- annotation files in GFF format
 
 ## Usage
 
@@ -42,7 +42,7 @@ bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -t "number_of_cpus"
 
 #### b. Using Core Alignment Files (Optional)
 
-If you have a core alignment file from [PIRATE](https://github.com/SionBayliss/PIRATE) or any other source, you can reduce variant calling time:
+If you have a core alignment file from [PIRATE](https://github.com/SionBayliss/PIRATE) or similar tools, you can reduce variant calling time:
 
 ```ruby
 bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -t "number_of_cpus"
@@ -72,24 +72,13 @@ bash run_maskfasta.sh \
   -i "/path/to/input_dir" \
   -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
-  -t "number_of_cpus"
+  -t "number_of_cpus" \
+  -x #Optional debugging mode (Warning: output files will get messy)
 ```
 
-#### Optional Parameter to enable debugging mode (Warning: output files will get messy) ####
+#### Mask specific region (Optional) 
 
-```ruby
-bash run_maskfasta.sh \
-  -g "/path/to/query_sequence.fasta" \
-  -i "/path/to/input_dir" \
-  -d "LD_threshold_value" \
-  -o "/path/to/output_dir" \
-  -t "number_of_cpus"
-  -x
-```
-
-#### If there is specific region you want to mask (Optional) 
-
-If you have the specific region you want to mask, you can use the `-s` parameter and give the file sepecify the region. The file should be tab-delimited format and should specify the contig, starting and end point. Like:
+If you have the specific region you want to mask, you can use the `-s` parameter and give the file sepecify the region. The file should be in tab-delimited format and specify the contig, starting and end point:
 
 `target region.tsv`
 
@@ -101,7 +90,7 @@ GCF_000189455.fas	No	NZ_CP025395.1	33931	34407
 GCF_000568455.fas	Yes	NZ_CP007176.1	34275	88793
 ```
 
-Then the running code will be like:
+Usage would be as follows:
 
 ```ruby
 bash run_maskfasta.sh\
@@ -121,13 +110,13 @@ bash run_maskfasta.sh\
 - **`./ld_ref/`**  
   Contains LD information files, including BED and FASTA files for LD regions.
 - **`./unitig_output/`**  
-  1. `unitig.output.pyseer`: Unitigs of whole genomes used for analysis.
-  2. `potential.kmer_output.txt`: k-mers from LD regions.
-  3. `extracted.unitig.out.pyseer`: Unitig files without LD regions, formatted for pyseer.
+  1) `unitig.output.pyseer`: Unitigs of whole genomes used for analysis.
+  2) `potential.kmer_output.txt`: k-mers from LD regions.
+  3) `extracted.unitig.out.pyseer`: Unitig files without LD regions, formatted for pyseer.
 
-## Running PYSEER
+## Running pyseer
 
-`maskGWAS` automates running pyseer and sorting results, separating extreme outliers for individual plots.
+`maskGWAS` automates running `pyseer' and sorting results, separating extreme outliers for individual plots.
 
 ```ruby
 bash run_pyseer.sh \
@@ -142,7 +131,7 @@ bash run_pyseer.sh \
 
 ## Plotting PYSEER Results
 
-Generate plots for pyseer results. Ensure directory paths are correctly set.
+Generate plots for `pyseer' results. Ensure directory paths are correctly set.
 
 ```ruby
 bash run_pyseer_plotting.sh \
