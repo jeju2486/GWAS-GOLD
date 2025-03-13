@@ -96,9 +96,9 @@ Usage would be as follows:
 bash run_maskfasta.sh\
   -s "path/to/target_region.tsv" \
   -i "/path/to/input_dir" \
-  -d 3000 \
+  -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
-  -t $SLURM_CPUS_PER_TASK
+  -t "number_of_cpus"
 ```
 
 ## Output
@@ -114,9 +114,9 @@ bash run_maskfasta.sh\
   2) `potential.kmer_output.txt`: k-mers from LD regions.
   3) `extracted.unitig.out.pyseer`: Unitig files without LD regions, formatted for pyseer.
 
-## Running pyseer
+## 4. Running pyseer
 
-`maskGWAS` automates running `pyseer' and sorting results, separating extreme outliers for individual plots.
+`maskGWAS` automates running `pyseer` and sorting results, separating extreme outliers for individual plots.
 
 ```ruby
 bash run_pyseer.sh \
@@ -129,9 +129,9 @@ bash run_pyseer.sh \
   -s "$pyseer_script"
 ```
 
-## Plotting PYSEER Results
+## 5. Plotting pyseer results
 
-Generate plots for `pyseer' results. Ensure directory paths are correctly set.
+Generate plots for `pyseer` results. Ensure directory paths are correctly set.
 
 ```ruby
 bash run_pyseer_plotting.sh \
