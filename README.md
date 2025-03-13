@@ -42,7 +42,7 @@ bash run_ld_calculation.sh -i "$input_dir" -o "$output_dir" -t "number_of_cpus"
 
 #### b. Using Core Alignment Files (Optional)
 
-If you have a core alignment file from [PIRATE](https://github.com/SionBayliss/PIRATE) or similar tools, you can reduce variant calling time:
+If you have a core alignment file from [PIRATE](https://github.com/SionBayliss/PIRATE) or similar tools, you can reduce variant calling time by running the following script:
 
 ```ruby
 bash run_ld_calculation_from_aln.sh -i "$pirate_result_dir" -o "$output_dir" -t "number_of_cpus"
@@ -73,7 +73,7 @@ bash run_maskfasta.sh \
   -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
   -t "number_of_cpus" \
-  -x #Optional debugging mode (Warning: output files will get messy)
+  -x   #Optional debugging mode (Warning: output files will get messy)
 ```
 
 #### Mask specific region (Optional) 
@@ -141,7 +141,7 @@ bash run_pyseer_plotting.sh \
   -o "$pyseer_output_dir" \
   -p "prefix"  # Optional: Prefix for output files
 ```
-This code will automatically find the gff files in the given directory corresponding to the fasta file and assuming all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
+This code will automatically find gff files in `$gff_dir` corresponding to the fasta files in `$input_fasta_dir` and assume all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
 
 **Notes:**
 - The prefix should ideally match the one used in `run_pyseer.sh`.
