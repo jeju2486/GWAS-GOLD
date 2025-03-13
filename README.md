@@ -1,7 +1,6 @@
 # maskGWAS
 
-**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes before performing GWAS to identify significant variation associated with target gene carriage. It generates unitig files of whole genomes by masking the specified target gene. 
-
+**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes before creating unitigs to perform k-mer based GWAS to identify significant variation associated with target gene carriage. 
 ## Requirements
 
 Before using `maskGWAS`, ensure the following software are installed:
@@ -151,7 +150,7 @@ bash run_pyseer_plotting.sh \
   -g "$gff_dir" \
   -s "$pyseer_script" \
   -o "$pyseer_output_dir" \
-  -p "sccmec"  # Optional: Prefix for output files
+  -p "prefix"  # Optional: Prefix for output files
 ```
 This code will automatically find the gff files in the given directory corresponding to the fasta file and assuming all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
 
