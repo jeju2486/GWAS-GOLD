@@ -11,7 +11,7 @@ Before using `maskGWAS`, ensure the following software are installed:
 4. **[unitig-caller](https://github.com/bacpop/unitig-caller)** (or higher)
 5. **[BWA](http://bio-bwa.sourceforge.net/)** (version 0.7.17 or higher)
 6. **[pyseer](https://github.com/weecology/pyseer)** (version 1.3.11 or higher)
-7. **[ABRICATE](https://github.com/tseemann/abricate)** (version 1.0.0 or higher)
+7. **[ABRicate](https://github.com/tseemann/abricate)** (version 1.0.0 or higher)
 
 ## Installation
 
@@ -56,7 +56,6 @@ Visualize LD decay using `ggplot2` in R:
 Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_dir"
 ```
 **Notes:**
-- This generates LD decay images.
 - Ensure the first file in the directory is your reference genome.
 - *Todo*:
   - Make the reference genome selectable.
