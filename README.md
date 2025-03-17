@@ -1,6 +1,6 @@
 # maskGWAS
 
-**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes before creating unitigs to perform k-mer based GWAS to identify significant variation associated with target gene carriage. 
+**maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes within unitigs before performing k-mer based GWAS to identify significant variation associated with target gene carriage. 
 ## Requirements
 
 Before using `maskGWAS`, ensure the following software are installed:
@@ -77,12 +77,12 @@ bash run_maskfasta.sh \
 
 #### Mask specific region (Optional) 
 
-If you have the specific region you want to mask, you can use the `-s` parameter and give the file sepecify the region. The file should be in tab-delimited format and specify the contig, starting and end point:
+If you have the specific region you want to mask, you can use the `-s` parameter and give the file specify the region. The file should be in tab-delimited format and specify the contig and start and end points:
 
 `target region.tsv`
 
 ```
-Reference	Gene_presence	Contig	Start0	End
+Reference	Gene_presence	Contig	Start	End
 GCF_000144955.fas	Yes	NC_017338.2	33707	57871
 GCF_000159535.fas	Yes	NC_017342.1	459032	486212
 GCF_000189455.fas	No	NZ_CP025395.1	33931	34407
