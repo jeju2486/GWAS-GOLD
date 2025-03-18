@@ -25,14 +25,14 @@ cd maskGWAS
 
 To run this analysis pipeline you will need:
 - assembly files in FASTA format OR an alignment file
-- target sequence(s) to mask in FASTA format
+- target sequence(s) to mask in FASTA format OR start and end coordinates for masking region in tab-delimited format.
 - annotation files in GFF format
 
 ## Usage
 
 ### 1. Calculate Linkage Disequilibrium (LD)
 
-#### a. Using Fasta Files
+#### a. Using FASTA Files
 
 To calculate LD using fasta files in your directory, run:
 
@@ -63,11 +63,14 @@ Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_di
 
 
 ### 3. Mask Target Gene
-Run the masking script to generate SAM/BED files and LD information:
+
+Run the masking script to generate SAM/BED files and LD information.
+
+#### a. Using FASTA File
 
 ```ruby
 bash run_maskfasta.sh \
-  -g "/path/to/query_sequence.fasta" \
+  -g "/path/to/target_sequence.fasta" \
   -i "/path/to/input_dir" \
   -d "LD_threshold_value" \
   -o "/path/to/output_dir" \
@@ -75,9 +78,9 @@ bash run_maskfasta.sh \
   -x   #Optional debugging mode (Warning: output files will get messy)
 ```
 
-#### Mask specific region (Optional) 
+#### b. Using Region Coordinates
 
-If you have the specific region you want to mask, you can use the `-s` parameter and give the file specify the region. The file should be in tab-delimited format and specify the contig and start and end points:
+If you know the start and end coordinates of the specific regions you want to mask, you can use the `-s` parameter to specify this. The file should be in tab-delimited format and specify the contig and start and end points:
 
 `target region.tsv`
 
