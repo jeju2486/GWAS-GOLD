@@ -142,10 +142,14 @@ bash run_pyseer_plotting.sh \
 ```
 This code will automatically find gff files in `$gff_dir` corresponding to the fasta files in `$input_fasta_dir` and assume all of them are reference genome but not the sample one (Read the [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model) for more detail)
 
+To make the annotation plot use the plotting_annotation.R file (Original code from [pyseer tutorial page](https://pyseer.readthedocs.io/en/master/tutorial.html#k-mer-association-with-mixed-effects-model))
+
+```ruby
+Rscript plotting_annotation.R "$pyseer_output_dir"/gene_hits_saureus.txt annotation pdf,svg
+```
+
 **Notes:**
 - The prefix should ideally match the one used in `run_pyseer.sh`.
-
-
 
 ## Contact
 
