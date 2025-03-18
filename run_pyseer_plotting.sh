@@ -11,12 +11,11 @@ usage() {
     echo
     echo "This script will:"
     echo "  (1) Create a file named {prefix}_reference.tsv by pairing .fna/.fas/.fasta with .gff3/.gff."
-    echo "  (2) Run phandango_mapper-runner.py using either:"
-    echo "       (2.1) The first .fna/.fas/.fasta if no -f is provided, or"
-    echo "       (2.2) The user-provided FASTA (-f) if specified."
-    echo "       The output plot will have the FASTA filename appended as a suffix."
-    echo "  (3) Use {prefix}_reference.tsv to run annotate_hits_pyseer-runner.py."
-    echo "  (4) Summarize low/high outlier k-mers annotation results."
+    echo "  (2) Run phandango_mapper-runner.py on {prefix}_kmers.txt (if present),"
+    echo "      using either the first .fna/.fas/.fasta if no -f is provided, or a user-specified FASTA."
+    echo "  (3) Generate a Q-Q plot using {prefix}_kmers.txt."
+    echo "  (4) Annotate and summarize only significant_kmers.txt (renamed outputs)."
+    echo "      *All low/high outlier steps are removed.*"
     echo
     echo "Required arguments:"
     echo "  -r   Directory containing .fna/.fas/.fasta files"
@@ -27,7 +26,6 @@ usage() {
     echo
     echo "Optional arguments:"
     echo "  -f   Specific FASTA file (within -r) to use for phandango_mapper-runner.py"
-    echo "       (if omitted, uses the first .fna/.fas/.fasta found in -r)"
     echo "  -h   Show this help and exit"
     echo
     exit 1
@@ -78,8 +76,8 @@ result_dir="$output_dir"
 reference_tsv="${result_dir}/${prefix}_reference.tsv"
 echo "[Info] Creating '${reference_tsv}'..."
 
-# Optional: If you want a header row, uncomment:
-# echo -e "FNA_Path\tGFF_Path\tReference" > "$reference_tsv"
+# Clear or create the reference file
+> "$reference_tsv"
 
 shopt -s nullglob
 fasta_files=("$ref_fna_dir"/*.{fna,fas,fasta})
@@ -90,14 +88,11 @@ if [ "${#fasta_files[@]}" -eq 0 ]; then
     exit 1
 fi
 
-# We'll append to reference_tsv if you want a multi-line file:
-> "$reference_tsv"  # clear or create
-
+# Pair each FASTA with its matching .gff or .gff3
 for fna in "${fasta_files[@]}"; do
     base_fna=$(basename "$fna")
     base_noext="${base_fna%.*}"
 
-    # Try matching .gff or .gff3
     matched_gff=""
     for ext in gff gff3; do
         candidate="${gff_dir}/${base_noext}.${ext}"
@@ -108,7 +103,6 @@ for fna in "${fasta_files[@]}"; do
     done
 
     if [ -n "$matched_gff" ]; then
-        # Append line:  FNA   GFF   ref
         echo -e "${fna}\t${matched_gff}\tref" >> "$reference_tsv"
     else
         echo "Warning: No matching .gff or .gff3 for '${fna}' found in '$gff_dir'." >&2
@@ -118,19 +112,15 @@ done
 echo "[Info] Finished building '${reference_tsv}'."
 
 ###############################################################################
-# Step 2: phandango_mapper-runner.py
+# Step 2: phandango_mapper-runner.py on {prefix}_kmers.txt
 ###############################################################################
-# 2.1 If no -f is given, pick the first FASTA from the array
-# 2.2 If -f is given, that is the chosen FASTA
+# Decide which FASTA to use
 echo "[Info] Determining which FASTA to use for phandango_mapper-runner.py..."
-
 chosen_fasta=""
 if [ -z "$specific_fasta" ]; then
-    # (2.1) Use the first file found
     chosen_fasta="${fasta_files[0]}"
     echo "[Info] No -f provided. Using the first FASTA: $chosen_fasta"
 else
-    # (2.2) Use the user-specified FASTA
     chosen_fasta="$ref_fna_dir/$specific_fasta"
     if [ ! -f "$chosen_fasta" ]; then
         echo "Error: '$chosen_fasta' not found (from -f argument)." >&2
@@ -139,10 +129,6 @@ else
     echo "[Info] Using user-specified FASTA: $chosen_fasta"
 fi
 
-# We'll extract the base name for suffix usage in the output
-chosen_fasta_bn=$(basename "$chosen_fasta")
-chosen_fasta_noext="${chosen_fasta_bn%.*}"
-
 # phandango_mapper script path
 phandango_mapper_runner="${pyseer_script_dir}/../phandango_mapper-runner.py"
 if [ ! -f "$phandango_mapper_runner" ]; then
@@ -150,77 +136,56 @@ if [ ! -f "$phandango_mapper_runner" ]; then
     exit 1
 fi
 
-# Example: Suppose we have a file named sccmec_kmers.filtered.txt and high_outliers_kmers.txt
-# We'll run phandango for each, producing plots that end with the chosen FASTA's name
-if [ -f "${result_dir}/${prefix}_kmers.filtered.txt" ]; then
-    out_plot="${result_dir}/${prefix}_kmers_minimum_${chosen_fasta_noext}.plot"
+if [ -f "${result_dir}/${prefix}_kmers.txt" ]; then
+    chosen_fasta_bn=$(basename "$chosen_fasta")
+    chosen_fasta_noext="${chosen_fasta_bn%.*}"
+    out_plot="${result_dir}/${prefix}_kmers_${chosen_fasta_noext}.plot"
+
     echo "[Info] Running phandango_mapper-runner.py on '${prefix}_kmers.txt'..."
     python "$phandango_mapper_runner" \
         "${result_dir}/${prefix}_kmers.txt" \
         "$chosen_fasta" \
         "$out_plot"
     echo "[Info] Generated: $out_plot"
+else
+    echo "[Info] '${prefix}_kmers.txt' not found; skipping phandango plotting."
 fi
 
-if [ -f "${result_dir}/high_outliers_kmers.txt" ]; then
-    out_plot="${result_dir}/${prefix}_kmers_high_${chosen_fasta_noext}.plot"
-    echo "[Info] Running phandango_mapper-runner.py on 'high_outliers_kmers.txt'..."
-    python "$phandango_mapper_runner" \
-        "${result_dir}/high_outliers_kmers.txt" \
-        "$chosen_fasta" \
-        "$out_plot"
-    echo "[Info] Generated: $out_plot"
-fi
-
-
-# Step 2.5: Generate the Q-Q plot
-
+###############################################################################
+# Step 2.5: Generate the Q-Q plot (using {prefix}_kmers.txt)
+###############################################################################
 qq_plot="${pyseer_script_dir}/qq_plot.py"
 
-python "$qq_plot" "$output_dir/saureus_kmers.filtered.txt"
+if [ -f "${result_dir}/${prefix}_kmers.txt" ]; then
+    echo "[Info] Generating QQ-plot from ${prefix}_kmers.txt..."
+    python "$qq_plot" "${result_dir}/${prefix}_kmers.txt"
+    mv ./qq_plot.png "${result_dir}"
+    echo "[Info] QQ-plot saved to ${result_dir}/qq_plot.png"
+else
+    echo "[Info] Cannot generate QQ-plot; ${prefix}_kmers.txt does not exist."
+fi
 
-mv ./qq_plot.png "$output_dir"
-
-# Step 3: Use {prefix}_reference.tsv to run annotate_hits_pyseer-runner.py
+###############################################################################
+# Step 3: Annotate ONLY significant_kmers.txt (no more 'original_' prefix)
+###############################################################################
 annotate_hits_runner="${pyseer_script_dir}/../annotate_hits_pyseer-runner.py"
 if [ ! -f "$annotate_hits_runner" ]; then
     echo "Error: annotate_hits_pyseer-runner.py not found at '$annotate_hits_runner'." >&2
     exit 1
 fi
 
-# We'll annotate with the same low/high k-mers you mentioned
 if [ -f "${result_dir}/significant_kmers.txt" ]; then
-    original_annotated_out="${result_dir}/original_kmers_${prefix}.txt"
-    echo "[Info] Annotating normal/low k-mers with $reference_tsv..."
+    annotated_out="${result_dir}/annotated_kmers_${prefix}.txt"
+    echo "[Info] Annotating significant k-mers with $reference_tsv..."
     python "$annotate_hits_runner" \
         "${result_dir}/significant_kmers.txt" \
         "$reference_tsv" \
-        "$original_annotated_out"
-    echo "[Info] Created $original_annotated_out"
-fi
-
-if [ -f "${result_dir}/filtered_kmers_normal_and_low.txt" ]; then
-    low_annotated_out="${result_dir}/low_annotated_kmers_${prefix}.txt"
-    echo "[Info] Annotating normal/low k-mers with $reference_tsv..."
-    python "$annotate_hits_runner" \
-        "${result_dir}/filtered_kmers_normal_and_low.txt" \
-        "$reference_tsv" \
-        "$low_annotated_out"
-    echo "[Info] Created $low_annotated_out"
-fi
-
-if [ -f "${result_dir}/high_outliers_kmers.txt" ]; then
-    high_annotated_out="${result_dir}/high_annotated_kmers_${prefix}.txt"
-    echo "[Info] Annotating high outliers k-mers with $reference_tsv..."
-    python "$annotate_hits_runner" \
-        "${result_dir}/high_outliers_kmers.txt" \
-        "$reference_tsv" \
-        "$high_annotated_out"
-    echo "[Info] Created $high_annotated_out"
+        "$annotated_out"
+    echo "[Info] Created $annotated_out"
 fi
 
 ###############################################################################
-# Step 4: Summarize low/high gene hits
+# Step 4: Summarize only the annotated significant_kmers (no low/high blocks)
 ###############################################################################
 summarise_annotations="${pyseer_script_dir}/summarise_annotations.py"
 if [ ! -f "$summarise_annotations" ]; then
@@ -228,35 +193,16 @@ if [ ! -f "$summarise_annotations" ]; then
     exit 1
 fi
 
-# Summarize original hits
-if [ -f "${result_dir}/low_annotated_kmers_${prefix}.txt" ]; then
-    out_original_genes="${result_dir}/original_gene_hits_${prefix}.txt"
-    echo "[Info] Summarizing original annotated k-mers into $out_original_genes..."
+if [ -f "${result_dir}/annotated_kmers_${prefix}.txt" ]; then
+    out_genes="${result_dir}/gene_hits_${prefix}.txt"
+    echo "[Info] Summarizing annotated significant k-mers into $out_genes..."
     python "$summarise_annotations" --nearby \
-        "${result_dir}/original_kmers_${prefix}.txt" \
-        > "$out_original_genes"
-    echo "[Info] Created $out_original_genes"
+        "${result_dir}/annotated_kmers_${prefix}.txt" \
+        > "$out_genes"
+    echo "[Info] Created $out_genes"
 fi
 
-
-# Summarize low hits
-if [ -f "${result_dir}/low_annotated_kmers_${prefix}.txt" ]; then
-    out_low_genes="${result_dir}/low_gene_hits_${prefix}.txt"
-    echo "[Info] Summarizing low annotated k-mers into $out_low_genes..."
-    python "$summarise_annotations" \
-        "${result_dir}/low_annotated_kmers_${prefix}.txt" \
-        > "$out_low_genes"
-    echo "[Info] Created $out_low_genes"
-fi
-
-# Summarize high hits
-if [ -f "${result_dir}/high_annotated_kmers_${prefix}.txt" ]; then
-    out_high_genes="${result_dir}/high_gene_hits_${prefix}.txt"
-    echo "[Info] Summarizing high annotated k-mers into $out_high_genes..."
-    python "$summarise_annotations" \
-        "${result_dir}/high_annotated_kmers_${prefix}.txt" \
-        > "$out_high_genes"
-    echo "[Info] Created $out_high_genes"
-fi
-
+###############################################################################
+# Done
+###############################################################################
 echo "[Success] Pipeline completed for prefix '$prefix'."

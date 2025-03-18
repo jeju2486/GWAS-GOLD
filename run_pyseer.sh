@@ -9,23 +9,17 @@ usage() {
 # Parse command-line arguments
 while getopts ":t:p:i:o:P:T:s:" opt; do
   case $opt in
-    t) treefile="$OPTARG"
-    ;;
-    p) phenotype="$OPTARG"
-    ;;
-    i) unitig_result="$OPTARG"
-    ;;
-    o) result_dir="$OPTARG"
-    ;;
-    P) prefix="$OPTARG"
-    ;;
-    T) threads="$OPTARG"
-    ;;
-    s) pyseer_scripts_dir="$OPTARG"
-    ;;
-    \?) echo "Invalid option -$OPTARG" >&2
-        usage
-    ;;
+    t) treefile="$OPTARG" ;;
+    p) phenotype="$OPTARG" ;;
+    i) unitig_result="$OPTARG" ;;
+    o) result_dir="$OPTARG" ;;
+    P) prefix="$OPTARG" ;;
+    T) threads="$OPTARG" ;;
+    s) pyseer_scripts_dir="$OPTARG" ;;
+    \?)
+      echo "Invalid option -$OPTARG" >&2
+      usage
+      ;;
   esac
 done
 
@@ -40,11 +34,12 @@ mkdir -p "$result_dir"
 
 # Check if the main Pyseer output file already exists
 if [ ! -f "$result_dir/${prefix}_kmers.txt" ]; then
-    echo "Generating phylogeny-based similarity matrix..."
+    echo "[INFO] Generating phylogeny-based similarity matrix..."
     python "$pyseer_scripts_dir"/phylogeny_distance.py \
-        --lmm "$treefile" > "$result_dir"/"${prefix}_phylogeny.tsv"
+        --lmm "$treefile" \
+        > "$result_dir"/"${prefix}_phylogeny.tsv" 2>/dev/null
 
-    echo "Running Pyseer..."
+    echo "[INFO] Running Pyseer (this may take some time)..."
     pyseer \
         --lmm \
         --phenotypes "$phenotype" \
@@ -53,9 +48,11 @@ if [ ! -f "$result_dir/${prefix}_kmers.txt" ]; then
         --min-af 0.05 \
         --output-patterns "$result_dir"/kmer_patterns.txt \
         --cpu "$threads" \
-        > "$result_dir"/"${prefix}_kmers.txt"
+        > "$result_dir"/"${prefix}_kmers.txt" 2>/dev/null
+
+    echo "[INFO] Pyseer analysis complete."
 else
-    echo "Pyseer output file ${prefix}_kmers.txt already exists. Skipping Pyseer analysis."
+    echo "[INFO] Pyseer output file ${prefix}_kmers.txt already exists. Skipping Pyseer analysis."
 fi
 
-echo "Done. Unfiltered Pyseer results are in: $result_dir/${prefix}_kmers.txt"
+echo "[DONE] Results are in: $result_dir/${prefix}_kmers.txt"

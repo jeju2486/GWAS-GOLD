@@ -1,0 +1,86 @@
+#!/usr/bin/env python
+
+def get_options():
+    import argparse
+
+    description = 'Compare the tests output'
+    parser = argparse.ArgumentParser(description=description)
+
+    parser.add_argument('ilog',
+                        help='Input log')
+    parser.add_argument('ierr',
+                        help='Input error')
+    parser.add_argument('olog',
+                        help='Original log')
+    parser.add_argument('oerr',
+                        help='Original error')
+
+    return parser.parse_args()
+
+if __name__ == "__main__":
+    options = get_options()
+
+    import sys
+    import numpy as np
+    import pandas as pd
+    from filecmp import cmp
+    from scipy import stats
+
+    if not cmp(options.ilog, options.olog, shallow=False):
+        try:
+            m1 = pd.read_csv(options.ilog, index_col=0, sep='\t')
+            m2 = pd.read_csv(options.olog, index_col=0, sep='\t')
+        except pd.errors.EmptyDataError:
+            sys.stderr.write('One of the files is empty but not the other\n')
+            sys.exit(1)
+
+        if m1.shape != m2.shape:
+            sys.stderr.write('Different outputs shape\n')
+            sys.exit(1)
+
+        idx = list(set(m1.index).intersection(m2.index))
+        if len(idx) != m1.shape[0] or len(idx) != m2.shape[0]:
+            sys.stderr.write('Different variants\n')
+            sys.exit(1)
+        m1 = m1.loc[idx]
+        m2 = m2.loc[idx]
+
+        # differentiate the type of output
+        ncolumns = ['af', 'beta']
+        if 'beta-std-err' in m1.columns: # enet does not have this column
+            ncolumns.append('beta-std-err')
+            if 'variant_h2' not in m1.columns:
+                ncolumns.append('intercept')
+                ncolumns += [x for x in m1.columns
+                            if x.startswith('PC')
+                            or x.startswith('covariate')]
+            else:
+                ncolumns.append('variant_h2')
+
+        for c in ncolumns:
+            if m1[c].dropna().shape[0] == 0 and m2[c].dropna().shape[0] == 0:
+                sys.stderr.write('Skipping column %s because of all-NaNs\n' %
+                                 c)
+                continue
+            corr = stats.pearsonr(m1[c], m2[c])[0]
+            if corr < 0.9:
+                sys.stderr.write('Column %s correlation below 0.9 (%.3f)\n' % (c, corr))
+                sys.exit(1)
+            print('%s\t%.4f' % (c, corr))
+        for c in ['filter-pvalue',
+                  'lrt-pvalue']:
+            if m1[c].dropna().shape[0] == 0 and m2[c].dropna().shape[0] == 0:
+                sys.stderr.write('Skipping column %s because of all-NaNs\n' %
+                                 c)
+                continue
+            t = pd.DataFrame([-np.log10(m1[c]), -np.log10(m2[c])]).T.dropna()
+            t.columns = [0, 1]
+            corr = stats.pearsonr(t[0].values, t[1].values)[0]
+            if corr < 0.95:
+                sys.stderr.write('Column %s correlation below 0.95 (%.3f)\n' % (c, corr))
+                sys.exit(1)
+            print('%s\t%.4f' % (c, corr))
+    if not cmp(options.ierr, options.oerr, shallow=False):
+        # check but do not fail
+        sys.stderr.write('Changes in stderr messages\n')
+
