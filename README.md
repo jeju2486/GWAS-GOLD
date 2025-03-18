@@ -2,6 +2,9 @@
 
 **maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes within unitigs before performing k-mer based GWAS to identify significant variation associated with target gene carriage. 
 
+**Notes:**
+- All the codes at pyseer_codes folder are adapted from [pyseer](https://github.com/weecology/pyseer). Here I copied it just for easier running. 
+
 ## Requirements
 
 Before using `maskGWAS`, ensure the following software are installed:
