@@ -24,9 +24,9 @@ cd maskGWAS
 ## Input
 
 To run this analysis pipeline you will need:
-- assembly files in FASTA format OR an alignment file
-- target sequence(s) to mask in FASTA format OR start and end coordinates for masking region in tab-delimited format.
-- annotation files in GFF format
+- assembly files in FASTA format OR an alignment file.
+- target sequence(s) to mask in FASTA format OR start and end coordinates for target region in tab-delimited format.
+- annotation files in GFF format.
 
 ## Usage
 
@@ -118,7 +118,7 @@ bash run_maskfasta.sh\
 
 ## 4. Running pyseer
 
-`maskGWAS` automates running `pyseer` and sorting results, separating extreme outliers for individual plots.
+`maskGWAS` automates running `pyseer`.
 
 ```ruby
 bash run_pyseer.sh \
@@ -147,17 +147,6 @@ This code will automatically find gff files in `$gff_dir` corresponding to the f
 
 **Notes:**
 - The prefix should ideally match the one used in `run_pyseer.sh`.
-- Generates two plots: one for extreme outliers and one for normal data.
-- *Todo*: Make the plotting process more adaptable.
-
-
-**Output:**
-- Three plots:
-  1. Extreme outliers.
-  2. Normal distribution.
-  3. Include all data
-
-*Todo*: Enhance plot customisation and adaptability.
 
 ## To-Do List
 
