@@ -1,6 +1,7 @@
 # maskGWAS
 
 **maskGWAS** is an add-on tool of [unitig-caller](https://github.com/bacpop/unitig-caller) and [pyseer](https://github.com/weecology/pyseer) designed to detect genomic co-variation. This works by masking target genes within unitigs before performing k-mer based GWAS to identify significant variation associated with target gene carriage. 
+
 ## Requirements
 
 Before using `maskGWAS`, ensure the following software are installed:
@@ -57,10 +58,6 @@ Rscript plotting_lddecay.r -i "$output_dir/ld_results_sampled.ld" -o "$output_di
 ```
 **Notes:**
 - Ensure the first file in the directory is your reference genome.
-- *Todo*:
-  - Make the reference genome selectable.
-  - Add debugging messages to verify environment setup.
-
 
 ### 3. Mask Target Gene
 
@@ -131,7 +128,7 @@ bash run_pyseer.sh \
   -s "$pyseer_script"
 ```
 
-## 5. Plotting pyseer results
+## 5. Plotting pyseer results (Optional)
 
 Generate plots for `pyseer` results. Ensure directory paths are correctly set.
 
@@ -147,12 +144,6 @@ This code will automatically find gff files in `$gff_dir` corresponding to the f
 
 **Notes:**
 - The prefix should ideally match the one used in `run_pyseer.sh`.
-
-## To-Do List
-
-- **Generalisation**: Learn Conda to make `maskGWAS` runnable outside ARC servers.
-- **Reference Genome Selection**: Allow users to select the reference genome file.
-- **Plotting Enhancements**: Make plotting scripts more adaptable and customizable.
 
 
 
