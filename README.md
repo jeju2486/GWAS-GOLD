@@ -27,8 +27,8 @@ git clone https://github.com/jeju2486/GOLD-GWAS.git
 cd GOLD-GWAS
 ```
 
-> **Tip**
-> GOLD‑GWAS can be installed in a conda or mamba environment with all dependencies pre‑resolved (see `environment.yml`).
+> **To-do**
+> GOLD‑GWAS will be able to install in a conda or mamba environment with all dependencies pre‑resolved (see `environment.yml`).
 
 ---
 
