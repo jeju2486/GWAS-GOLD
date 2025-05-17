@@ -182,7 +182,3 @@ Rscript plotting_annotation.R \
 ## Contact
 
 Please open an issue on the [GitHub repository](https://github.com/jeju2486/GOLD-GWAS) or contact the maintainer for questions, bug reports, or contributions.
-
----
-
-© 2025 – GOLD‑GWAS development team. Released under the MIT License.
